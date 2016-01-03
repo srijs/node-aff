@@ -1,0 +1,21 @@
+{
+  "name": "aff",
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sam Rijs",
+  "license": "MIT",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-typedoc": "^0.2.3",
+    "grunt-typescript": "^0.8.0",
+    "typescript": "^1.6.2"
+  },
+  "dependencies": {
+    "bluebird": "^3.1.1"
+  }
+}
