@@ -23,6 +23,10 @@ export class Eff<F, T> {
     return new Eff((inj: F) => this.run(inj).catch(f));
   }
 
+  public recover(f: (err: Error) => Eff<F, T>): Eff<F, T> {
+    return new Eff((inj: F) => this.run(inj).catch(err => f(err).run(inj)));
+  }
+
   public attempt(): Eff<F, T | Error> {
     return new Eff((inj: F) => this.run(inj).catch(err => err));
   }
