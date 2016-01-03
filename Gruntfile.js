@@ -2,8 +2,9 @@
 
 module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-typescript');
+  grunt.loadNpmTasks('grunt-typedoc');
   grunt.loadNpmTasks('grunt-contrib-watch');
-
+  
   grunt.initConfig({
 
     pkg: grunt.file.readJSON('package.json'),
@@ -25,6 +26,18 @@ module.exports = function (grunt) {
       }
     },
 
+    typedoc: {
+      build: {
+        options: {
+          module: 'commonjs',
+          target: 'es6',
+          out: 'docs/',
+          name: 'Aff - Asynchronous effect system for TypeScript',
+        },
+        src: 'src/'
+      }
+    },
+
     watch: {
       files: 'src/**/*.ts',
       tasks: ['typescript']
@@ -32,5 +45,6 @@ module.exports = function (grunt) {
 
   });
 
-  grunt.registerTask('default', ['watch']);
+  grunt.registerTask('default', ['typescript', 'typedoc']);
+  grunt.registerTask('dev', ['watch']);
 };
