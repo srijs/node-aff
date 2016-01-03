@@ -7,6 +7,10 @@ export type Op<X, T> = (x: X) => Promise<T>;
 export class Eff<F, T> {
   public constructor(private op: Op<F, T>) {}
 
+  public run(inj: F): Promise<T> {
+    return this.op(inj);
+  }
+
   public static of<T>(x: T): Eff<{}, T> {
     return new Eff(_ => Promise.resolve(x));
   }
@@ -15,8 +19,12 @@ export class Eff<F, T> {
     return new Eff(_ => Promise.reject(err));
   }
 
-  public run(inj: F): Promise<T> {
-    return this.op(inj);
+  public catchError(f: (err: Error) => T): Eff<F, T> {
+    return new Eff((inj: F) => this.run(inj).catch(f));
+  }
+
+  public attempt(): Eff<F, T | Error> {
+    return new Eff((inj: F) => this.run(inj).catch(err => err));
   }
 
   public map<U>(f: (x: T) => U): Eff<F, U> {
