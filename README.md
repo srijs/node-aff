@@ -107,4 +107,4 @@ export interface CONSOLE {
 
 `Op` is just a type alias for a kleisli arrow of the `Promise` monad, so `Op<{data: any}, void>` is just short-hand for `(arg: {data: any}) => Promise<void>`.
 
-Basically, `Eff` uses a van Laarhoven representation to describe its actions. But instead of being a completely free monad, it is specialised to `Promise`. As a result, it sits in a sweet spot where it is more powerful than a simple effect system, and less powerful than a full-fledged free monad.
+Basically, `Eff` uses a [van Laarhoven representation](http://r6.ca/blog/20140210T181244Z.html) to describe its actions. But instead of being a completely free monad, it is specialised to `Promise`. As a result, it sits in a sweet spot where it is more powerful than a simple effect system, and less powerful than a full-fledged free monad.
