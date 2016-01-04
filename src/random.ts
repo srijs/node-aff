@@ -6,10 +6,6 @@ export interface RANDOM {
   random: Op<void, number>;
 }
 
-export module random {
-
-  export function random<F extends {random: RANDOM}>() {
-    return new Eff<F, number>(eff => eff.random.random(null));
-  }
-
+export function random<F>() {
+  return new Eff<F & {random: RANDOM}, number>(eff => eff.random.random(null));
 }

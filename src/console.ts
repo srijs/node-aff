@@ -11,20 +11,20 @@ export interface CONSOLE {
 
 export module console {
 
-  export function log<F extends {console: CONSOLE}>(data: any) {
-    return new Eff<F, void>(eff => eff.console.log({data: data}));
+  export function log<F>(data: any) {
+    return new Eff<F & {console: CONSOLE}, void>(eff => eff.console.log({data: data}));
   }
 
-  export function info<F extends {console: CONSOLE}>(data: any) {
-    return new Eff<F, void>(eff => eff.console.info({data: data}));
+  export function info<F>(data: any) {
+    return new Eff<F & {console: CONSOLE}, void>(eff => eff.console.info({data: data}));
   }
 
-  export function warn<F extends {console: CONSOLE}>(data: any) {
-    return new Eff<F, void>(eff => eff.console.warn({data: data}));
+  export function warn<F>(data: any) {
+    return new Eff<F & {console: CONSOLE}, void>(eff => eff.console.warn({data: data}));
   }
 
-  export function error<F extends {console: CONSOLE}>(data: any) {
-    return new Eff<F, void>(eff => eff.console.error({data: data}));
+  export function error<F>(data: any) {
+    return new Eff<F & {console: CONSOLE}, void>(eff => eff.console.error({data: data}));
   }
 
 }

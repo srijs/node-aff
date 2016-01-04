@@ -4,6 +4,6 @@ import {Eff} from './index';
 import {RANDOM, random} from './random';
 import {CONSOLE, console} from './console';
 
-function printRandom<F extends {random: RANDOM, console: CONSOLE}>(): Eff<F, void> {
-  return random.random().chain(n => console.log(n));
+export function printRandom<F>(): Eff<F & {random: RANDOM, console: CONSOLE}, void> {
+  return random().chain(n => console.log(n));
 }
