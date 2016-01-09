@@ -84,7 +84,7 @@ Uh oh, that looks like the compiler is not happy: It is complaining that our sig
 
 ### Combining effectful computations
 
-To combine two effectful computations, the `chain` function can be used, which works roughly the same as `then` in Promise land. It takes an effectful computation and chains a function after it, so that it will get called with the result of the computation. The function in turn returns a new effectful computation. Maybe a look at the type signature can make things more clear:
+To combine two effectful computations, the `chain` function can be used, which works roughly the same as `then` in Promise land. It takes an effectful computation and chains a function after it, so that it will get called with the result of the computation. The function in turn returns a new effectful computation. To understand things in detail, we need to take a look at the type signature:
 
 ```
 class Eff<F, T> {
