@@ -45,6 +45,6 @@ module.exports = function (grunt) {
 
   });
 
-  grunt.registerTask('default', ['typescript', 'typedoc']);
+  grunt.registerTask('default', ['typescript']);
   grunt.registerTask('dev', ['watch']);
 };
