@@ -84,7 +84,9 @@ Uh oh, that looks like the compiler is not happy: It is complaining that our sig
 
 ### Combining effectful computations
 
-To combine two effectful computations, the `chain` function can be used, which works roughly the same as `then` in Promise land. It takes an effectful computation and chains a function after it, so that it will get called with the result of the computation. The function in turn returns a new effectful computation. To understand things in detail, we need to take a look at the type signature:
+#### In Sequence
+
+To combine two effectful computations in sequence, the `chain` function can be used, which works roughly the same as `then` in Promise land. It takes an effectful computation and chains a function after it, so that it will get called with the result of the computation. The function in turn returns a new effectful computation. To understand things in detail, we need to take a look at the type signature:
 
 ```
 class Eff<F, T> {
@@ -93,6 +95,16 @@ class Eff<F, T> {
 ```
 
 This might seem complicated at first, but let's break it down a bit. `Eff<F, T>` describes an effectful computation that results in a value of type `T`, while performing effects of type `F`. We can combine it with a function that takes that resulting `T`, and returns a new computation `Eff<G, U>`. The result of that combination is the computation `Eff<F & G, U>`, which tells us that it performs effects from both input effects `F` and `G`, and results in a value of type `U`.
+
+#### In Parallel
+
+To combine two effectful computations in parallel, the `parallel` function can be used:
+
+```
+class Eff<F, T> {
+    public parallel<G, U>(eff: Eff<G, U>): Eff<F & G, [T, U]>;
+}
+```
 
 
 ## In Detail
