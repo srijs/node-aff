@@ -84,6 +84,15 @@ export class Eff<F, T> {
   }
 
   /**
+   * Combines the computation with another in parallel.
+   *
+   * @param eff The second effectful computation.
+   */
+  public parallel<G, U>(eff: Eff<G, U>): Eff<F & G, [T, U]> {
+    return new Eff((inj: F & G) => Promise.all([this.run(inj), eff.run(inj)]));
+  }
+
+  /**
    * Translates one effect to another using a contravariant mapping.
    *
    * @param t The contravariant function.
