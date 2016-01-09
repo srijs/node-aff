@@ -53,7 +53,7 @@ To take advantage of those capabilities, all we need to do is add a type signatu
 import {RANDOM, random} from 'aff/random';
 import {CONSOLE, console} from 'aff/console';
 
-function printRandom<F>(): Eff<F & {random: RANDOM, console: CONSOLE}, void> {
+function printRandom<F>(): Eff<{random: RANDOM, console: CONSOLE} & F, void> {
   return random().chain(n => console.log(n));
 }
 ```
@@ -68,15 +68,15 @@ What happens if we removed one of those from the type signature?
 import {RANDOM, random} from 'aff/random';
 import {CONSOLE, console} from 'aff/console';
 
-function printRandom<F>(): Eff<F & {random: RANDOM}, void> {
+function printRandom<F>(): Eff<{random: RANDOM} & F, void> {
   return random().chain(n => console.log(n));
 }
 ```
 
 ```
->> src/example.ts(8,10): error TS2322: Type 'Eff<{} & { random: RANDOM; } & { console: CONSOLE; }, void>' is not assignable to type 'Eff<F & { random: RANDOM; }, void>'.
->>   Type '{} & { random: RANDOM; } & { console: CONSOLE; }' is not assignable to type 'F & { random: RANDOM; }'.
->>     Type '{} & { random: RANDOM; } & { console: CONSOLE; }' is not assignable to type 'F'.
+>> src/example.ts(8,10): error TS2322: Type 'Eff<{ random: RANDOM; } & { console: CONSOLE; } & {}, void>' is not assignable to type 'Eff<{ random: RANDOM; } & F, void>'.
+>>   Type '{ random: RANDOM; } & { console: CONSOLE; } & {}' is not assignable to type '{ random: RANDOM; } & F'.
+>>     Type '{ random: RANDOM; } & { console: CONSOLE; } & {}' is not assignable to type 'F'.
 >>       Type '{ console: CONSOLE; }' is not assignable to type 'F'.
 ```
 

@@ -7,5 +7,5 @@ export interface RANDOM {
 }
 
 export function random<F>() {
-  return new Eff<F & {random: RANDOM}, number>(eff => eff.random.random(null));
+  return new Eff<{random: RANDOM} & F, number>(eff => eff.random.random(null));
 }
