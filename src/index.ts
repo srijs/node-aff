@@ -22,6 +22,19 @@ export class Eff<F, T> {
   }
 
   /**
+   * Runs the effectful computation asynchronously by supplying the necessary
+   * effect handlers, resulting in a promise.
+   *
+   * This is useful in case a trampoline is needed when chaining
+   * effects.
+   *
+   * @param inj The map of required effect handlers.
+   */
+  private runAsync(inj: F): Promise<T> {
+    return Promise.resolve().then(() => this.run(inj));
+  }
+
+  /**
    * Lifts a value into a pure effect which immediately returns.
    *
    * @param T The type of the value.
@@ -46,7 +59,7 @@ export class Eff<F, T> {
    * @param f The pure handler function.
    */
   public catchError(f: (err: Error) => T): Eff<F, T> {
-    return new Eff((inj: F) => this.run(inj).catch(f));
+    return new Eff((inj: F) => this.runAsync(inj).catch(f));
   }
 
   /**
@@ -55,14 +68,14 @@ export class Eff<F, T> {
    * @param f The effectful handler function.
    */
   public recover<G>(f: (err: Error) => Eff<G, T>): Eff<F & G, T> {
-    return new Eff((inj: F & G) => this.run(inj).catch(err => f(err).run(inj)));
+    return new Eff((inj: F & G) => this.runAsync(inj).catch(err => f(err).run(inj)));
   }
 
   /**
    * Promotes any error to the value level.
    */
   public attempt(): Eff<F, T | Error> {
-    return new Eff((inj: F) => this.run(inj).catch(err => err));
+    return new Eff((inj: F) => this.runAsync(inj).catch(err => err));
   }
 
   /**
@@ -71,7 +84,7 @@ export class Eff<F, T> {
    * @param f The pure mapping function.
    */
   public map<U>(f: (x: T) => U): Eff<F, U> {
-    return new Eff((inj: F) => this.run(inj).then(f));
+    return new Eff((inj: F) => this.runAsync(inj).then(f));
   }
 
   /**
@@ -80,7 +93,7 @@ export class Eff<F, T> {
    * @param f The effectful mapping function.
    */
   public chain<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U> {
-    return new Eff((inj: F & G) => this.run(inj).then(x => f(x).run(inj)));
+    return new Eff((inj: F & G) => this.runAsync(inj).then(x => f(x).run(inj)));
   }
 
   /**
@@ -89,7 +102,7 @@ export class Eff<F, T> {
    * @param eff The second effectful computation.
    */
   public parallel<G, U>(eff: Eff<G, U>): Eff<F & G, [T, U]> {
-    return new Eff((inj: F & G) => Promise.all([this.run(inj), eff.run(inj)]));
+    return new Eff((inj: F & G) => Promise.all([this.runAsync(inj), eff.runAsync(inj)]));
   }
 
   /**
