@@ -33,11 +33,11 @@ Let's start with an example:
 ```
 'use strict';
 
-import {random} from 'aff/random';
-import {console} from 'aff/console';
+import {random} from 'aff/std/random';
+import {log} from 'aff/std/console';
 
 function printRandom() {
-  return random().chain(n => console.log(n));
+  return random().chain(n => log(n));
 }
 ```
 
@@ -50,26 +50,28 @@ To take advantage of those capabilities, all we need to do is add a type signatu
 ```
 'use strict';
 
-import {RANDOM, random} from 'aff/random';
-import {CONSOLE, console} from 'aff/console';
+import {Eff} from 'aff';
+import {RANDOM, random} from 'aff/std/random';
+import {CONSOLE, log} from 'aff/std/console';
 
 function printRandom<F>(): Eff<{random: RANDOM, console: CONSOLE} & F, void> {
-  return random().chain(n => console.log(n));
+  return random().chain(n => log(n));
 }
 ```
 
-We are going to discuss the signatures in more detail later, but for now you can focus on the fact that the signature explicitly mentions `RANDOM` and `CONSOLE`, indicating that `printRandom` performs effects that affect the random entropy source and the console output. 
+We are going to discuss the signatures in more detail later, but for now you can focus on the fact that the signature explicitly mentions `RANDOM` and `CONSOLE`, indicating that `printRandom` performs effects that affect the random entropy source and the console output.
 
 What happens if we removed one of those from the type signature?
 
 ```
 'use strict';
 
-import {RANDOM, random} from 'aff/random';
-import {CONSOLE, console} from 'aff/console';
+import {Eff} from 'aff';
+import {RANDOM, random} from 'aff/std/random';
+import {CONSOLE, log} from 'aff/std/console';
 
 function printRandom<F>(): Eff<{random: RANDOM} & F, void> {
-  return random().chain(n => console.log(n));
+  return random().chain(n => log(n));
 }
 ```
 
@@ -122,6 +124,6 @@ export interface CONSOLE {
 }
 ```
 
-`Op` is just a type alias for a kleisli arrow of the `Promise` monad, so `Op<{data: any}, void>` is just short-hand for `(arg: {data: any}) => Promise<void>`.
+`Op` is just a type alias for a kleisli arrow of the `Run` monad, so `Op<{data: any}, void>` is just short-hand for `(arg: {data: any}) => Run<void>`.
 
-Basically, `Eff` uses a [van Laarhoven representation](http://r6.ca/blog/20140210T181244Z.html) to describe its actions. But instead of being a completely free monad, it is specialised to `Promise`. As a result, it sits in a sweet spot where it is more powerful than a simple effect system, and less powerful than a full-fledged free monad.
+Basically, `Eff` uses a [van Laarhoven representation](http://r6.ca/blog/20140210T181244Z.html) to describe its actions. But instead of being a completely free monad, it is specialised to `Run`. As a result, it sits in a sweet spot where it is more powerful than a simple effect system, and less powerful than a full-fledged free monad.
