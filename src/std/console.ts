@@ -1,6 +1,6 @@
 'use strict';
 
-import {Eff, Op} from './index';
+import {Eff, Op, Run} from '../index';
 
 export interface CONSOLE {
   log: Op<{data: any}, void>;
@@ -10,10 +10,10 @@ export interface CONSOLE {
 }
 
 export class RealWorldConsole implements CONSOLE {
-  log = (input: {data: any}) => Promise.resolve(console.log(input.data));
-  info = (input: {data: any}) => Promise.resolve(console.log(input.data));
-  warn = (input: {data: any}) => Promise.resolve(console.log(input.data));
-  error = (input: {data: any}) => Promise.resolve(console.log(input.data));
+  log = (input: {data: any}) => Run.of(console.log(input.data));
+  info = (input: {data: any}) => Run.of(console.log(input.data));
+  warn = (input: {data: any}) => Run.of(console.log(input.data));
+  error = (input: {data: any}) => Run.of(console.log(input.data));
 }
 
 export function log<F>(data: any) {
