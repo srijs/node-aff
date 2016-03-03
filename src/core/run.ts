@@ -1,7 +1,7 @@
 'use strict';
 
 export class Run<T> {
-  constructor(public promise: Promise<T>, public cancel: (reason: Error) => void) {}
+  constructor(private promise: Promise<T>, private canceler: (reason: Error) => void) {}
 
   static of<T>(x: T): Run<T> {
     return new Run(Promise.resolve(x), () => null);
@@ -9,6 +9,14 @@ export class Run<T> {
 
   static fail<T>(err: Error): Run<T> {
     return new Run(Promise.reject(err) as Promise<any>, () => null);
+  }
+
+  toPromise(): Promise<T> {
+    return this.promise;
+  }
+
+  cancel(reason: Error): void {
+    this.canceler(reason);
   }
 
   chain<U>(next: (x: T) => Run<U>): Run<U> {

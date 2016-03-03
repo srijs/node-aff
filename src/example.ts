@@ -11,4 +11,4 @@ export function printRandom<F>(): Eff<{random: RANDOM, console: CONSOLE} & F, vo
 printRandom().run({
   random: new RealWorldRandom(),
   console: new RealWorldConsole()
-});
+}).toPromise();
