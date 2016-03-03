@@ -49,7 +49,7 @@ export class Eff<F, T> {
    *
    * @param err The error to lift.
    */
-  public static throwError(err: Error): Eff<{}, any> {
+  public static throwError<T>(err: Error): Eff<{}, void> {
     return new Eff(_ => Promise.reject(err));
   }
 
