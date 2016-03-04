@@ -4,11 +4,24 @@
   "description": "Asynchronous effect system for TypeScript",
   "main": "out/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p ./src",
+    "install": "typings install",
+    "pretest": "tsc",
+    "test": "./node_modules/.bin/mocha out/*-spec.js",
+    "preuninstall": "typings uninstall"
   },
   "author": "Sam Rijs",
   "license": "MIT",
   "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.2.0",
+    "mocha": "^2.4.5",
+    "sinon": "^1.17.3",
+    "sinon-chai": "^2.8.0",
     "typescript": "^1.6.2"
+  },
+  "typings": "./lib/index.d.ts",
+  "bugs": {
+    "url" : "https://github.com/srijs/node-aff/issues"
   }
 }
