@@ -1,4 +1,4 @@
-# node-aff
+# node-aff [![Circle CI](https://circleci.com/gh/srijs/node-aff.svg?style=svg)](https://circleci.com/gh/srijs/node-aff)
 
 _Asynchronous effect system for TypeScript_
 
