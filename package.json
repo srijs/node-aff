@@ -8,6 +8,10 @@
   },
   "author": "Sam Rijs",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:srijs/node-aff.git"
+  },
   "devDependencies": {
     "typescript": "^1.6.2"
   }
