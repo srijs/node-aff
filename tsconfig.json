@@ -28,7 +28,6 @@
     "typings/browser.d.ts"
   ],
   "references": [
-    "typings/**/*.d.ts",
-    "typings/tsd.d.ts"
+    "typings/main.d.ts"
   ]
 }

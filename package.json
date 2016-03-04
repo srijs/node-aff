@@ -6,19 +6,24 @@
   "scripts": {
     "build": "tsc -p ./src",
     "install": "typings install",
-    "pretest": "tsc",
+    "prepublish": "npm run build",
+    "pretest": "npm run build",
     "test": "./node_modules/.bin/mocha out/*-spec.js",
     "preuninstall": "typings uninstall"
   },
   "author": "Sam Rijs",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:srijs/node-aff.git"
+  },
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-as-promised": "^5.2.0",
     "mocha": "^2.4.5",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
-    "typescript": "^1.6.2"
+    "typescript": "^1.8.7"
   },
   "typings": "./lib/index.d.ts",
   "bugs": {
