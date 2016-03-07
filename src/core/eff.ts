@@ -20,7 +20,8 @@ export class Eff<F, T> {
    * @param inj The map of required effect handlers.
    */
   public run(inj: F): Run<T> {
-    return this.op(inj);
+    // trampoline left-associatively by calling the op inside a Run#chain
+    return Run.of(null).chain(() => this.op(inj));
   }
 
   /**

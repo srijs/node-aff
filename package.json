@@ -4,11 +4,11 @@
   "description": "Asynchronous effect system for TypeScript",
   "main": "out/index.js",
   "scripts": {
-    "build": "tsc -p ./src",
+    "build": "tsc",
     "install": "typings install",
     "prepublish": "npm run build",
     "pretest": "npm run build",
-    "test": "./node_modules/.bin/mocha out/*-spec.js",
+    "test": "./node_modules/.bin/mocha out/**/*-spec.js --recursive",
     "preuninstall": "typings uninstall"
   },
   "author": "Sam Rijs",
