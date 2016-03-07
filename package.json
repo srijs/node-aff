@@ -5,9 +5,11 @@
   "main": "out/index.js",
   "scripts": {
     "build": "tsc",
+    "install": "typings install",
+    "prepublish": "npm run build",
     "pretest": "npm run build",
-    "test": "mocha out/**/*-spec.js",
-    "prepublish": "npm run build"
+    "preuninstall": "typings uninstall",
+    "test": "mocha out/**/*-spec.js --recursive"
   },
   "author": "Sam Rijs",
   "license": "MIT",
@@ -19,6 +21,13 @@
     "chai": "^3.5.0",
     "chai-as-promised": "^5.2.0",
     "mocha": "^2.4.5",
-    "typescript": "^1.8.7"
+    "sinon": "^1.17.3",
+    "sinon-chai": "^2.8.0",
+    "typescript": "^1.8.7",
+    "typings": "^0.6.10"
+  },
+  "typings": "./lib/index.d.ts",
+  "bugs": {
+    "url" : "https://github.com/srijs/node-aff/issues"
   }
 }

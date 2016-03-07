@@ -8,7 +8,7 @@ export class Run<T> {
   }
 
   static fail<T>(err: Error): Run<T> {
-    return new Run(Promise.reject(err) as Promise<any>, () => null);
+    return new Run(Promise.reject<T>(err), () => null);
   }
 
   toPromise(): Promise<T> {

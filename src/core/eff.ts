@@ -20,13 +20,14 @@ export class Eff<F, T> {
    * @param inj The map of required effect handlers.
    */
   public run(inj: F): Run<T> {
-    return this.op(inj);
+    // trampoline left-associatively by calling the op inside a Run#chain
+    return Run.of(null).chain(() => this.op(inj));
   }
 
   /**
    * Lifts a value into a pure effect which immediately returns.
    *
-   * @param T The type of the value.
+   * @type T The type of the value.
    * @param x The value to lift.
    */
   public static of<T>(x: T): Eff<{}, T> {

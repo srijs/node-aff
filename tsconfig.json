@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
+    "declaration": true,
     "module": "commonjs",
     "target": "es6",
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "outDir": "out",
     "rootDir": "src",
     "sourceMap": true
@@ -22,7 +23,10 @@
     "placeOpenBraceOnNewLineForControlBlocks": false
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "out",
+    "typings/browser",
+    "typings/browser.d.ts"
   ],
   "references": [
     "typings/main.d.ts"
