@@ -11,8 +11,8 @@ class Deferred<T> {
 }
 
 export class EffUtil {
-    static scheduledOnce<T>(block: () => T, delay: number): Eff<{}, T> {
-        return new Eff<{}, T>(_ => {
+    static scheduledOnce<F, T>(block: () => T, delay: number): Eff<F, T> {
+        return new Eff<F, T>(_ => {
             const deferred = new Deferred<T>();
             const timeoutObject = setTimeout(() => {
                 try {
@@ -28,10 +28,10 @@ export class EffUtil {
             return new Run(deferred.promise, cancel);
         });
     }
-    static delay<T>(block: () => T): Eff<{}, T> {
+    static delay<F, T>(block: () => T): Eff<F, T> {
         return new Eff(_ => Run.of(block()));
     }
-    static unit(): Eff<{}, void> {
+    static unit<F>(): Eff<F, void> {
         return new Eff(_ => new Run<void>(Promise.resolve(), () => null));
     }
 }

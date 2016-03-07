@@ -8,13 +8,12 @@ import {Op, Eff} from './eff';
 import {Run} from './run';
 import {EffUtil} from './effutil';
 
-chai.should();
 chai.use(chaiAsPromised);
 
 describe('Regular Operation', () => {
     it('should work fine', () => {
         const op1 = EffUtil.scheduledOnce(() => 3, 500);
-        return op1.run({}).toPromise().should.eventually.equal(3);
+        return chai.expect(op1.run({}).toPromise()).to.eventually.equal(3);
     });
 
     it('can be cancelled', () => {
@@ -23,7 +22,7 @@ describe('Regular Operation', () => {
         const promise = run.toPromise();
         const cause = new Error('Operation cancelled');
         run.cancel(cause);
-        return promise.should.be.rejectedWith(cause);
+        return chai.expect(promise).to.be.rejectedWith(cause);
     });
 });
 
@@ -33,7 +32,7 @@ describe('Bind Operation', function() {
     it('should work fine', () => {
         const op1 = EffUtil.scheduledOnce(() => 3, 500);
         const op2 = op1.chain((multiplier) => EffUtil.scheduledOnce(() => 2 * multiplier, 500));
-        return op2.run({}).toPromise().should.eventually.equal(6);
+        return chai.expect(op2.run({}).toPromise()).to.eventually.equal(6);
     });
 
     it('can be cancelled', () => {
@@ -42,7 +41,7 @@ describe('Bind Operation', function() {
         const run = op2.run({});
         const cause = new Error('Operation cancelled');
         run.cancel(cause);
-        return run.toPromise().should.be.rejectedWith(cause);
+        return chai.expect(run.toPromise()).to.be.rejectedWith(cause);
     });
 
     it('can handle exceptions', () => {
@@ -50,7 +49,7 @@ describe('Bind Operation', function() {
         const op2 = op1.chain((multiplier) => EffUtil.scheduledOnce(() => {
             throw new Error('No need for a ' + multiplier);
         }, 500));
-        return op2.run({}).toPromise().should.be.rejectedWith('No need for a 3');
+        return chai.expect(op2.run({}).toPromise()).to.be.rejectedWith('No need for a 3');
     });
 
     it('trampoline', () => {
@@ -60,7 +59,7 @@ describe('Bind Operation', function() {
         {
             operation = operation.chain((i: number) => Eff.of(i + 1));
         }
-        return operation.run({}).toPromise().should.eventually.equal(numberOfLoops);
+        return chai.expect(operation.run({}).toPromise()).to.eventually.equal(numberOfLoops);
     });
 
     it('trampoline with delay', () => {
@@ -70,7 +69,7 @@ describe('Bind Operation', function() {
         {
             operation = operation.chain((i: number) => EffUtil.delay(() => i + 1));
         }
-        return operation.run({}).toPromise().should.eventually.equal(numberOfLoops);
+        return chai.expect(operation.run({}).toPromise()).to.eventually.equal(numberOfLoops);
     });
 
     it('trampoline with cancellation', () => {
@@ -89,7 +88,7 @@ describe('Bind Operation', function() {
         const run = operation.run({});
         const promise = run.toPromise().then((success: number) => Promise.reject(finished), (reject: Error) => Promise.resolve(count));
         run.cancel(cause);
-        return promise.should.eventually.lessThan(numberOfLoops);
+        return chai.expect(promise).to.eventually.lessThan(numberOfLoops);
     });
 
 });

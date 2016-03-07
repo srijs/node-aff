@@ -1,6 +1,6 @@
 {
   "name": "aff",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Asynchronous effect system for TypeScript",
   "main": "out/index.js",
   "scripts": {
@@ -8,8 +8,8 @@
     "install": "typings install",
     "prepublish": "npm run build",
     "pretest": "npm run build",
-    "test": "./node_modules/.bin/mocha out/**/*-spec.js --recursive",
-    "preuninstall": "typings uninstall"
+    "preuninstall": "typings uninstall",
+    "test": "mocha out/**/*-spec.js --recursive"
   },
   "author": "Sam Rijs",
   "license": "MIT",
@@ -23,7 +23,8 @@
     "mocha": "^2.4.5",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
-    "typescript": "^1.8.7"
+    "typescript": "^1.8.7",
+    "typings": "^0.6.10"
   },
   "typings": "./lib/index.d.ts",
   "bugs": {
