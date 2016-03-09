@@ -23,7 +23,9 @@ export abstract class Stream<F, I, O, R> {
     return new Leftover(value, x => Eff.of(Stream.of(x)));
   }
 
-  abstract chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S>
+  chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
+    return chain(this, f);
+  }
 
   map<S>(f: (r: R) => S): Stream<F, I, O, S> {
     return this.chain(r => Stream.of(f(r)));
@@ -38,29 +40,17 @@ export class Pure<F, I, O, R> extends Stream<F, I, O, R> {
   constructor(public value: R) {
     super();
   }
-
-  chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
-    return f(this.value);
-  }
 }
 
 export class Lift<F, I, O, R> extends Stream<F, I, O, R> {
   constructor(public eff: Eff<F, Stream<F, I, O, R>>) {
     super();
   }
-
-  chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
-    return new Lift(this.eff.map(r => r.chain(f)));
-  }
 }
 
 export class Await<F, I, O, R> extends Stream<F, I, O, R> {
-  constructor(public k: (r: any) => Eff<F, Stream<F, I, O, R>>) {
+  constructor(public k: (i: I) => Eff<F, Stream<F, I, O, R>>) {
     super();
-  }
-
-  chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
-    return new Await(x => this.k(x).map(r => r.chain(f)));
   }
 }
 
@@ -68,18 +58,28 @@ export class Yield<F, I, O, R> extends Stream<F, I, O, R> {
   constructor(public value: O, public k: (r: void) => Eff<F, Stream<F, I, O, R>>) {
     super();
   }
-
-  chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
-    return new Yield(this.value, x => this.k(x).map(r => r.chain(f)));
-  }
 }
 
 export class Leftover<F, I, O, R> extends Stream<F, I, O, R> {
   constructor(public value: I, public k: (r: void) => Eff<F, Stream<F, I, O, R>>) {
     super();
   }
+}
 
-  chain<G, S>(f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
-    return new Leftover(this.value, x => this.k(x).map(r => r.chain(f)));
+function chain<F, G, I, O, R, S>(s: Stream<F, I, O, R>, f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
+  if (s instanceof Pure) {
+    return f((this as Pure<F, I, O, R>).value);
+  }
+  if (s instanceof Lift) {
+    return new Lift(s.eff.map(r => r.chain(f)));
+  }
+  if (s instanceof Await) {
+    return new Await(i => s.k(i).map(r => r.chain(f)));
+  }
+  if (s instanceof Yield) {
+    return new Yield(s.value, x => s.k(x).map(r => r.chain(f)));
+  }
+  if (s instanceof Leftover) {
+    return new Leftover(s.value, x => s.k(x).map(r => r.chain(f)));
   }
 }
