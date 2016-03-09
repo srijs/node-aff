@@ -68,7 +68,7 @@ export class Leftover<F, I, O, R> extends Stream<F, I, O, R> {
 
 function chain<F, G, I, O, R, S>(s: Stream<F, I, O, R>, f: (r: R) => Stream<G, I, O, S>): Stream<F & G, I, O, S> {
   if (s instanceof Pure) {
-    return f((this as Pure<F, I, O, R>).value);
+    return f(s.value);
   }
   if (s instanceof Lift) {
     return new Lift(s.eff.map(r => r.chain(f)));
@@ -81,5 +81,31 @@ function chain<F, G, I, O, R, S>(s: Stream<F, I, O, R>, f: (r: R) => Stream<G, I
   }
   if (s instanceof Leftover) {
     return new Leftover(s.value, x => s.k(x).map(r => r.chain(f)));
+  }
+}
+
+export function fuse<F, G, I, O, P, R>(left: Stream<F, I, O, void>, right: Stream<G, O, P, R>): Stream<F & F, I, P, R> {
+  if (right instanceof Pure) {
+    return new Pure(right.value);
+  }
+  if (right instanceof Yield) {
+    return new Yield(right.value, x => right.k(x).map(s => fuse(left, s)));
+  }
+  if (right instanceof Leftover) {
+    return new Lift(right.k(null).map(s => fuse(new Yield(right.value, x => Eff.of(left)), s)));
+  }
+  if (right instanceof Await) {
+    if (left instanceof Pure) {
+      return new Lift(right.k(null).map(s => fuse(left, s)));
+    }
+    if (left instanceof Yield) {
+      return new Lift(right.k(left.value).chain(s => left.k(null).map(t => fuse(t, s))));
+    }
+    if (left instanceof Leftover) {
+      return new Leftover(left.value, r => left.k(r).map(s => fuse(s, right)));
+    }
+    if (left instanceof Await) {
+      return new Await(r => left.k(r).map(s => fuse(s, right)));
+    }
   }
 }
