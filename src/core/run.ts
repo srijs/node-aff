@@ -30,7 +30,7 @@ export class Run<T> {
         return Promise.reject(cancelReason) as Promise<any>;
       }
       const nextRun = next(x);
-      onCancel = nextRun.cancel;
+      onCancel = nextRun.cancel.bind(nextRun);
       return nextRun.promise;
     }), reason => onCancel(reason));
   }
