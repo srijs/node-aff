@@ -1,5 +1,7 @@
 'use strict';
 
+import {EffUtil} from './effutil';
+
 export class Run<T> {
   constructor(private promise: Promise<T>, private canceler: (reason: Error) => void) {}
 
@@ -20,35 +22,11 @@ export class Run<T> {
   }
 
   chain<U>(next: (x: T) => Run<U>): Run<U> {
-    let cancelReason: Error;
-    let onCancel = (reason: Error) => {
-      cancelReason = reason;
-      this.cancel(reason);
-    };
-    return new Run(this.promise.then((x: T) => {
-      if (cancelReason) {
-        return Promise.reject(cancelReason) as Promise<any>;
-      }
-      const nextRun = next(x);
-      onCancel = nextRun.cancel.bind(nextRun);
-      return nextRun.promise;
-    }), reason => onCancel(reason));
+    return this.bind(next, this.promise.then.bind(this.promise));
   }
 
-  catch<U>(handler: (err: Error) => Run<U>): Run<T | U> {
-    let cancelReason: Error;
-    let onCancel = (reason: Error) => {
-      cancelReason = reason;
-      this.cancel(reason);
-    };
-    return new Run(this.promise.catch((err: Error) => {
-      if (cancelReason) {
-        return Promise.reject(cancelReason);
-      }
-      const handlerRun = handler(err);
-      onCancel = handlerRun.cancel;
-      return handlerRun.promise;
-    }), reason => onCancel(reason));
+  catch<U>(handler: (err: Error) => Run<U>): Run<U> {
+    return this.bind(handler, this.promise.catch.bind(this.promise));
   }
 
   and<U>(other: Run<U>): Run<[T, U]> {
@@ -57,4 +35,24 @@ export class Run<T> {
       other.cancel(reason);
     });
   }
+
+  private bind<X, U>(f: (x: X) => Run<U>, binder: (block: (x: X) => PromiseLike<U>) => Promise<U>): Run<U> {
+    return EffUtil.fromFunction(abortCallback => {
+      let complete: (x: X) => void;
+      const cancellablePromise = new Promise<X>((resolve, reject) => {
+        abortCallback(reject);
+        complete = resolve;
+      });
+      cancellablePromise.catch(this.canceler);
+      return binder(x => {
+        complete(x);
+        return cancellablePromise.then(x2 => {
+          const nextRun = f(x);
+          abortCallback(nextRun.cancel.bind(nextRun));
+          return nextRun.promise;
+        });
+      });
+    });
+  }
+
 }
