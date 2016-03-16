@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 
 import {Run} from './run';
-import {EffUtil} from './effutil';
+import {EffUtil} from './util';
 
 chai.use(chaiAsPromised);
 

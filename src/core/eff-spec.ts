@@ -6,7 +6,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 
 import {Op, Eff} from './eff';
 import {Run} from './run';
-import {EffUtil} from './effutil';
+import {EffUtil} from './util';
 
 chai.use(chaiAsPromised);
 

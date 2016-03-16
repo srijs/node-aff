@@ -1,6 +1,6 @@
 'use strict';
 
-import {EffUtil} from './effutil';
+import {EffUtil} from './util';
 
 export class Run<T> {
   constructor(private promise: Promise<T>, private canceler: (reason: Error) => void) {}

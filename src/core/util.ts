@@ -36,5 +36,16 @@ export class EffUtil {
       });
     }));
   }
+}
 
+export function forEach<F, T, U>(arr: Array<T>, f: (x: T) => Eff<F, void>): Eff<F, void> {
+  function loop(i: number): Eff<F, void> {
+    if (i >= arr.length) {
+      return Eff.of(null);
+    }
+    return f(arr[i]).chain(() => {
+      return loop(i + 1);
+    });
+  };
+  return loop(0);
 }
