@@ -4,24 +4,24 @@ import {Eff} from './eff';
 import {Run} from './run';
 
 export class EffUtil {
-  static scheduledOnce<F, T>(block:() => T, delay:number):Eff<F, T> {
+  static scheduledOnce<F, T>(block: () => T, delay: number): Eff<F, T> {
     return new Eff<F, T>(() => EffUtil.scheduledRun(block, delay));
   }
 
-  static delay<F, T>(block:() => T):Eff<F, T> {
+  static delay<F, T>(block: () => T): Eff<F, T> {
     return new Eff(() => Run.of(block()));
   }
 
   static unit<F>():Eff<F, void> {
-    return new Eff(() => new Run<void>(Promise.resolve(), () => null));
+    return Eff.of(null);
   }
 
-  static fromFunction<T>(f:(abortCallback:(abort:(reason:Error) => void) => void) => Promise<T>):Run<T> {
-    let onCancel:(e:Error) => void;
+  static fromFunction<T>(f: (abortCallback: (abort: (reason:Error) => void) => void) => Promise<T>): Run<T> {
+    let onCancel: (e: Error) => void;
     return new Run(f(abort => onCancel = abort), e => onCancel(e));
   }
 
-  private static scheduledRun<F, T>(block:() => T, delay:number):Run<T> {
+  private static scheduledRun<F, T>(block: () => T, delay: number): Run<T> {
     return EffUtil.fromFunction(abortCallback => new Promise((resolve, reject) => {
       const timeoutObject = setTimeout(() => {
         try {
@@ -41,7 +41,7 @@ export class EffUtil {
 export function forEach<F, T, U>(arr: Array<T>, f: (x: T) => Eff<F, void>): Eff<F, void> {
   function loop(i: number): Eff<F, void> {
     if (i >= arr.length) {
-      return Eff.of(null);
+      return EffUtil.unit();
     }
     return f(arr[i]).chain(() => {
       return loop(i + 1);
