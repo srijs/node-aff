@@ -1,6 +1,6 @@
 {
   "name": "aff",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Asynchronous effect system for TypeScript",
   "main": "out/index.js",
   "scripts": {
