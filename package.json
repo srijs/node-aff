@@ -5,10 +5,8 @@
   "main": "out/index.js",
   "scripts": {
     "build": "tsc",
-    "install": "typings install",
     "prepublish": "npm run build",
     "pretest": "npm run build",
-    "preuninstall": "typings uninstall",
     "test": "mocha out/**/*-spec.js --recursive"
   },
   "author": "Sam Rijs",
