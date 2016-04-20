@@ -30,7 +30,7 @@ export class Eff<F, T> {
    * @type T The type of the value.
    * @param x The value to lift.
    */
-  public static of<T>(x: T): Eff<{}, T> {
+  public static of<F, T>(x: T): Eff<F, T> {
     return new Eff(_ => Run.of(x));
   }
 

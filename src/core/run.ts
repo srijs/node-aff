@@ -13,12 +13,20 @@ export class Run<T> {
     return new Run(Promise.reject<T>(err), () => null);
   }
 
+  static fromPromise<T>(promise: Promise<T>): Run<T> {
+    return new Run(promise, () => null);
+  }
+
   toPromise(): Promise<T> {
     return this.promise;
   }
 
   cancel(reason: Error): void {
     this.canceler(reason);
+  }
+
+  map<U>(f: (x: T) => U): Run<U> {
+    return new Run(this.promise.then(x => f(x)), this.canceler);
   }
 
   chain<U>(next: (x: T) => Run<U>): Run<U> {
