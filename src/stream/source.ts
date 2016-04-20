@@ -17,15 +17,21 @@ export class Source<Fx, Output> {
   }
 
   concat(next: Source<Fx, Output>): Source<Fx, Output> {
+    return this.concatWithEffect(Eff.of(next));
+  }
+
+  concatWithEffect(f: Eff<Fx, Source<Fx, Output>>): Source<Fx, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
       return this.pipe({
         onStart: () => sink.onStart(),
         onData: (state: State, output: Output) => sink.onData(state, output),
         onEnd: (intermediateState: State) => {
-          return next.pipe({
-            onStart: () => Eff.of<Fx2, State>(intermediateState),
-            onData: (state: State, output: Output) => sink.onData(state, output),
-            onEnd: (state: State) => sink.onEnd(state)
+          return f.chain((next) => {
+            return next.pipe({
+              onStart: () => Eff.of<Fx2, State>(intermediateState),
+              onData: (state: State, output: Output) => sink.onData(state, output),
+              onEnd: (state: State) => sink.onEnd(state)
+            });
           });
         }
       });
