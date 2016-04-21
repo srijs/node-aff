@@ -16,6 +16,14 @@ export class Source<Fx, Output> {
     });
   }
 
+  static singleton<Fx, Output>(output: Output): Source<Fx, Output> {
+    return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
+      return sink.onStart()
+        .chain((init: State) => sink.onData(init, output))
+        .chain((state: State) => sink.onEnd(state));
+    });
+  }
+
   concat(next: Source<Fx, Output>): Source<Fx, Output> {
     return this.concatWithEffect(Eff.of(next));
   }
