@@ -38,6 +38,16 @@ export class Source<Fx, Output> {
     });
   }
 
+  map<NewOutput>(f: (output: Output) => NewOutput): Source<Fx, NewOutput> {
+    return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, NewOutput, State, Result>) => {
+      return this.pipe({
+        onStart: () => sink.onStart(),
+        onData: (state, output) => sink.onData(state, f(output)),
+        onEnd: (state) => sink.onEnd(state)
+      });
+    });
+  }
+
   static fromArray<Output>(arr: Array<Output>): Source<{}, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
       return sink.onStart().chain((init: State) => {
