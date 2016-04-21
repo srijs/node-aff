@@ -116,9 +116,9 @@ Streams provide a simple but powerful streaming abstraction. They consist of two
 
 Sinks are stream consumers. More concretely, they describe how to reduce a stream, by providing three actions:
 
-- onStart: () => Eff<Fx, State>;
-- onData: (s: State, i: Input) => Eff<Fx, State>;
-- onEnd: (s: State) => Eff<Fx, Result>;
+- `onStart: () => Eff<Fx, State>`
+- `onData: (s: State, i: Input) => Eff<Fx, State>`
+- `onEnd: (s: State) => Eff<Fx, Result>`
 
 Those three actions are called in order during the lifecycle of the stream.
 When a stream starts, `onStart` is called, returning an effectful computation that results in an initial state. As data flows through the stream, `onData` is called multiple times with the current state
