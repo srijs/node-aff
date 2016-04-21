@@ -48,6 +48,20 @@ export class Source<Fx, Output> {
     });
   }
 
+  flatMap<Fx2, NewOutput>(f: (output: Output) => Source<Fx, NewOutput>): Source<Fx & Fx2, NewOutput> {
+    return new Source(<Fx3, State, Result>(sink: SinkInterface<Fx3, NewOutput, State, Result>) => {
+      return this.pipe<Fx3, State, Result>({
+        onStart: () => sink.onStart(),
+        onData: (state, output) => f(output).pipe({
+          onStart: () => Eff.of<Fx & Fx2 & Fx3, State>(state),
+          onData: (intermediateState, newOutput) => sink.onData(intermediateState, newOutput),
+          onEnd: (intermediateState) => Eff.of<Fx & Fx2 & Fx3, State>(intermediateState)
+        }),
+        onEnd: (state) => sink.onEnd(state)
+      });
+    });
+  }
+
   static fromArray<Output>(arr: Array<Output>): Source<{}, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
       return sink.onStart().chain((init: State) => {
