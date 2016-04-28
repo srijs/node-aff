@@ -55,4 +55,14 @@ export class Sink<Fx, Input, State, Result> implements SinkInterface<Fx, Input, 
       onEnd: (s) => this.onEnd(s).map(f)
     });
   }
+
+  parallel<Fx2, OtherState, OtherResult>(
+    other: Sink<Fx2, Input, OtherState, OtherResult>
+  ): Sink<Fx & Fx2, Input, [State, OtherState], [Result, OtherResult]> {
+    return new Sink<Fx & Fx2, Input, [State, OtherState], [Result, OtherResult]>({
+      onStart: () => this.onStart().parallel(other.onStart()),
+      onData: (s, i) => this.onData(s[0], i).parallel(other.onData(s[1], i)),
+      onEnd: (s) => this.onEnd(s[0]).parallel(other.onEnd(s[1]))
+    });
+  }
 }
