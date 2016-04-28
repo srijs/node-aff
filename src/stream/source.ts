@@ -2,6 +2,7 @@ import {Eff} from '../core/eff';
 import {fold} from '../core/util';
 
 import {SinkInterface} from './sink';
+import {fromInputStream} from './compat/input';
 
 export class Source<Fx, Output> {
   constructor(private _pipe: <Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => Eff<Fx & Fx2, Result>) {}
@@ -70,6 +71,14 @@ export class Source<Fx, Output> {
     });
   }
 
+  toArray(): Eff<Fx, Array<Output>> {
+    return this.pipe({
+      onStart: () => Eff.of([]),
+      onData: (arr, outp) => Eff.of(arr.concat([outp])),
+      onEnd: (arr) => Eff.of(arr)
+    });
+  }
+
   static fromArray<Output>(arr: Array<Output>): Source<{}, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
       return sink.onStart().chain((init: State) => {
@@ -80,5 +89,9 @@ export class Source<Fx, Output> {
         return sink.onEnd(state);
       });
     });
+  }
+
+  static fromInputStream<F>(input: NodeJS.ReadableStream): Source<F, Buffer> {
+    return fromInputStream(input);
   }
 }
