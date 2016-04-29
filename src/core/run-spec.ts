@@ -68,9 +68,9 @@ describe('Run', () => {
           });
         });
       });
-      setTimeout(() => {
+      setImmediate(() => {
         run.cancel(cancelReason);
-      }, 100);
+      });
       return chai.expect(run.toPromise()).to.be.rejectedWith(abortReason);
     });
 
@@ -84,9 +84,9 @@ describe('Run', () => {
           });
         });
       }).chain(() => Run.of(42));
-      setTimeout(() => {
+      setImmediate(() => {
         run.cancel(cancelReason);
-      }, 100);
+      });
       return chai.expect(run.toPromise()).to.be.rejectedWith(abortReason);
     });
 
@@ -100,9 +100,9 @@ describe('Run', () => {
           });
         });
       }));
-      setTimeout(() => {
+      setImmediate(() => {
         run.cancel(cancelReason);
-      }, 100);
+      });
       return chai.expect(run.toPromise()).to.be.rejectedWith(abortReason);
     });
 
@@ -113,9 +113,9 @@ describe('Run', () => {
           abortCallback(reject);
         });
       });
-      setTimeout(() => {
+      setImmediate(() => {
         run.cancel(cancelReason);
-      }, 100);
+      });
       return chai.expect(run.toPromise()).to.be.rejectedWith(cancelReason);
     });
 
