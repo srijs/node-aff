@@ -18,6 +18,10 @@ export class Run<T> {
     }));
   }
 
+  static never<T>(): Run<T> {
+    return Run.fromPromise(new Promise(() => {}));
+  }
+
   static fail<T>(err: Error): Run<T> {
     return new Run(Promise.reject<T>(err), () => null);
   }

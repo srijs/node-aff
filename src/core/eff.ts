@@ -46,6 +46,15 @@ export class Eff<F, T> {
   }
 
   /**
+   * Returns a pure effect that never returns.
+   *
+   * @type T The type of the value.
+   */
+  public static never<F, T>(): Eff<F, T> {
+    return new Eff(_ => Run.never());
+  }
+
+  /**
    * Lifts an error into a pure effect, causing it to fail.
    *
    * @param err The error to lift.

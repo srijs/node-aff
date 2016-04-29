@@ -19,7 +19,7 @@ class FeedingStream<F, A> extends stream.Writable {
   }
 
   _write(buf: Buffer, enc: String, cb: (err?: Error) => void) {
-    const run = this._feed(this._init, buf).run(this._inj);
+    const run = this._feed(this.state, buf).run(this._inj);
     run.toPromise().then((state: A) => {
       this.state = state;
       return cb();
