@@ -10,7 +10,7 @@ export class Run<T> {
   }
 
   static immediate<T>(f: () => T): Run<T> {
-    return new Run(new Promise((resolve, reject) => {
+    return Run.fromPromise(new Promise((resolve, reject) => {
       setImmediate(() => {
         try { resolve(f()); }
         catch (err) { reject(err); }
