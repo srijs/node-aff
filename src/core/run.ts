@@ -9,6 +9,15 @@ export class Run<T> {
     return new Run(Promise.resolve(x), () => null);
   }
 
+  static immediate<T>(f: () => T): Run<T> {
+    return new Run(new Promise((resolve, reject) => {
+      setImmediate(() => {
+        try { resolve(f()); }
+        catch (err) { reject(err); }
+      });
+    }));
+  }
+
   static fail<T>(err: Error): Run<T> {
     return new Run(Promise.reject<T>(err), () => null);
   }

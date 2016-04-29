@@ -35,6 +35,17 @@ export class Eff<F, T> {
   }
 
   /**
+   * Lifts a nullary function into a pure effect which is scheduled
+   * via setImmediate.
+   *
+   * @type T The type of the value.
+   * @param f The function to lift.
+   */
+  public static immediate<F, T>(f: () => T): Eff<F, T> {
+    return new Eff(_ => Run.immediate(f));
+  }
+
+  /**
    * Lifts an error into a pure effect, causing it to fail.
    *
    * @param err The error to lift.

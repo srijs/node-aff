@@ -13,18 +13,16 @@ chai.use(chaiAsPromised);
 describe('Regular Operation', () => {
 
   it('should work fine', () => {
-    const op1 = EffUtil.scheduledOnce(() => 3, 500);
+    const op1 = Eff.immediate(() => 3);
     return chai.expect(op1.run({}).toPromise()).to.eventually.equal(3);
   });
 
   it('can be cancelled', () => {
-    const op1 = EffUtil.scheduledOnce(() => 3, 500);
+    const op1 = Eff.immediate(() => 3);
     const run = op1.run({});
     const promise = run.toPromise();
     const cause = new Error('Operation cancelled');
-    setTimeout(() => {
-      run.cancel(cause);
-    }, 100);
+    run.cancel(cause);
     return chai.expect(promise).to.be.rejectedWith(cause);
   });
 });
@@ -33,32 +31,30 @@ describe('Bind Operation', function () {
   this.timeout(4000);
 
   it('should work fine', () => {
-    const op1 = EffUtil.scheduledOnce(() => 3, 500);
-    const op2 = op1.chain((multiplier) => EffUtil.scheduledOnce(() => 2 * multiplier, 500));
+    const op1 = Eff.immediate(() => 3);
+    const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
     return chai.expect(op2.run({}).toPromise()).to.eventually.equal(6);
   });
 
   it('can be cancelled', () => {
-    const op1 = EffUtil.scheduledOnce(() => 3, 500);
-    const op2 = op1.chain((multiplier) => EffUtil.scheduledOnce(() => 2 * multiplier, 500));
+    const op1 = Eff.immediate(() => 3);
+    const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
     const run = op2.run({});
     const cause = new Error('Operation cancelled');
-    setTimeout(() => {
-      run.cancel(cause);
-    }, 100);
+    run.cancel(cause);
     return chai.expect(run.toPromise()).to.be.rejectedWith(cause);
   });
 
   it('can handle exceptions', () => {
-    const op1 = EffUtil.scheduledOnce(() => 3, 500);
-    const op2 = op1.chain((multiplier) => EffUtil.scheduledOnce(() => {
+    const op1 = Eff.immediate(() => 3);
+    const op2 = op1.chain((multiplier) => Eff.immediate(() => {
       throw new Error('No need for a ' + multiplier);
-    }, 500));
+    }));
     return chai.expect(op2.run({}).toPromise()).to.be.rejectedWith('No need for a 3');
   });
 
   it('trampolines', () => {
-    let operation = EffUtil.scheduledOnce(() => 0, 150);
+    let operation = Eff.immediate(() => 0);
     const numberOfLoops = 20000;
     for (let l = 0; l < numberOfLoops; l++) {
       operation = operation.chain((i:number) => Eff.of(i + 1));
@@ -67,7 +63,7 @@ describe('Bind Operation', function () {
   });
 
   it('trampolines with delay', () => {
-    let operation = EffUtil.scheduledOnce(() => 0, 150);
+    let operation = Eff.immediate(() => 0);
     const numberOfLoops = 20000;
     for (let l = 0; l < numberOfLoops; l++) {
       operation = operation.chain((i:number) => EffUtil.delay(() => i + 1));
@@ -76,7 +72,7 @@ describe('Bind Operation', function () {
   });
 
   it('trampolines with cancellation', () => {
-    let operation = EffUtil.scheduledOnce(() => 0, 150);
+    let operation = Eff.immediate(() => 0);
     const numberOfLoops = 20000;
     const cause = new Error('Operation cancelled');
     const finished = new Error('Operation should not have finished');
