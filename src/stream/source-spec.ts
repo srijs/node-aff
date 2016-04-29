@@ -64,6 +64,34 @@ describe('Stream', () => {
 
     });
 
+    describe('map', () => {
+
+      it('produces an empty source from an empty source', () => {
+        const src = Source.empty();
+        return chai.expect(src.map((x: number) => x + 1).toArray().run({}).toPromise()).to.eventually.deep.equal([]);
+      });
+
+      it('replaces each output with the result of the function', () => {
+        const src = Source.fromArray([1,2,3]);
+        return chai.expect(src.map((x: number) => x + 1).toArray().run({}).toPromise()).to.eventually.deep.equal([2,3,4]);
+      });
+
+    });
+
+    describe('flatMap', () => {
+
+      it('produces an empty source from an empty source', () => {
+        const src = Source.empty();
+        return chai.expect(src.flatMap(() => Source.fromArray([1,2,3])).toArray().run({}).toPromise()).to.eventually.deep.equal([]);
+      });
+
+      it('flattens all results of the function', () => {
+        const src = Source.fromArray([1,2,3]);
+        return chai.expect(src.flatMap(x => Source.fromArray([x,x*2,x*3])).toArray().run({}).toPromise()).to.eventually.deep.equal([1,2,3,2,4,6,3,6,9]);
+      });
+
+    });
+
   });
 
 });
