@@ -1,5 +1,6 @@
 import * as stream from 'stream';
 
+import {Context} from '../../core/ctx';
 import {Run} from '../../core/run';
 import {Eff} from '../../core/eff';
 import {Source} from '../source';
@@ -9,6 +10,7 @@ class FeedingStream<F, A> extends stream.Writable {
   public state: A;
 
   constructor(
+    private _ctx: Context,
     private _init: A,
     private _feed: (state: A, buf: Buffer) => Eff<F, A>,
     private _inj: F,
@@ -20,7 +22,7 @@ class FeedingStream<F, A> extends stream.Writable {
 
   _write(buf: Buffer, enc: String, cb: (err?: Error) => void) {
     const run = this._feed(this.state, buf).run(this._inj);
-    run.toPromise().then((state: A) => {
+    run.toPromise(this._ctx).then((state: A) => {
       this.state = state;
       return cb();
     }, (err) => cb(err));
@@ -28,16 +30,16 @@ class FeedingStream<F, A> extends stream.Writable {
 }
 
 function feed<F, A>(input: NodeJS.ReadableStream, init: A, step: (state: A, buf: Buffer) => Eff<F, A>): Eff<F, A> {
-  return new Eff<F, A>((inj: F) => {
-    const s = new FeedingStream(init, step, inj);
-    const run = Run.fromPromise(new Promise((resolve, reject) => {
+  return new Eff<F, A>((inj: F) => new Run(ctx => {
+    const s = new FeedingStream(ctx, init, step, inj);
+    const p = new Promise((resolve, reject) => {
       input.on('error', reject);
       s.on('finish', () => resolve(s.state));
       s.on('error', reject);
-    }));
+    });
     input.pipe(s);
-    return run;
-  });
+    return p;
+  }));
 }
 
 export function fromInputStream<F>(input: NodeJS.ReadableStream): Source<F, Buffer> {

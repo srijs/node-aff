@@ -1,12 +1,12 @@
 'use strict';
 
-import {EffUtil} from './util';
+import {Context} from './ctx';
 
 export class Run<T> {
-  constructor(private promise: Promise<T>, private canceler: (reason: Error) => void) {}
+  constructor(private action: (ctx: Context) => Promise<T>) {}
 
   static of<T>(x: T): Run<T> {
-    return new Run(Promise.resolve(x), () => null);
+    return new Run(_ => Promise.resolve(x));
   }
 
   static immediate<T>(f: () => T): Run<T> {
@@ -23,57 +23,43 @@ export class Run<T> {
   }
 
   static fail<T>(err: Error): Run<T> {
-    return new Run(Promise.reject<T>(err), () => null);
+    return new Run(_ => Promise.reject<T>(err));
   }
 
   static fromPromise<T>(promise: Promise<T>): Run<T> {
-    return new Run(promise, () => null);
+    return new Run(_ => promise);
   }
 
-  toPromise(): Promise<T> {
-    return this.promise;
-  }
-
-  cancel(reason: Error): void {
-    this.canceler(reason);
+  toPromise(ctx: Context): Promise<T> {
+    return this.action(ctx);
   }
 
   map<U>(f: (x: T) => U): Run<U> {
-    return new Run(this.promise.then(x => f(x)), this.canceler);
+    return new Run(ctx => this.action(ctx).then(x => f(x)));
   }
 
   chain<U>(next: (x: T) => Run<U>): Run<U> {
-    return this.bind(next, this.promise.then.bind(this.promise));
+    return new Run(ctx => {
+      return ctx.withChild(cctx => this.action(cctx)).then(x => {
+        return ctx.withChild(cctx => next(x).action(cctx));
+      });
+    });
   }
 
-  catch<U>(handler: (err: Error) => Run<U>): Run<U> {
-    return this.bind(handler, this.promise.catch.bind(this.promise));
+  catch(handler: (err: Error) => Run<T>): Run<T> {
+    return new Run(ctx => {
+      return ctx.withChild(cctx => this.action(cctx)).catch(err => {
+        return ctx.withChild(cctx => handler(err).action(cctx));
+      });
+    });
   }
 
   and<U>(other: Run<U>): Run<[T, U]> {
-    return new Run(Promise.all([this.promise, other.promise]), reason => {
-      this.cancel(reason);
-      other.cancel(reason);
+    return new Run(ctx => {
+      return Promise.all([
+        ctx.withChild(cctx => this.action(cctx)),
+        ctx.withChild(cctx => other.action(cctx))
+      ]);
     });
   }
-
-  private bind<X, U>(f: (x: X) => Run<U>, binder: (block: (x: X) => PromiseLike<U>) => Promise<U>): Run<U> {
-    return EffUtil.fromFunction(abortCallback => {
-      let complete: (x: X) => void;
-      const cancellablePromise = new Promise<X>((resolve, reject) => {
-        abortCallback(reject);
-        complete = resolve;
-      });
-      cancellablePromise.catch(this.canceler);
-      return binder(x => {
-        complete(x);
-        return cancellablePromise.then(x2 => {
-          const nextRun = f(x);
-          abortCallback(nextRun.cancel.bind(nextRun));
-          return nextRun.promise;
-        });
-      });
-    });
-  }
-
 }

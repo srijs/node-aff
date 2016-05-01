@@ -15,15 +15,15 @@ describe('Regular Operation', () => {
 
   it('should work fine', () => {
     const op1 = Eff.immediate(() => 3);
-    return chai.expect(op1.run({}).toPromise()).to.eventually.equal(3);
+    return chai.expect(op1.exec({})).to.eventually.equal(3);
   });
 
   it('can be cancelled', () => {
+    const ctx = new Context();
     const op1 = Eff.immediate(() => 3);
-    const run = op1.run({});
-    const promise = run.toPromise();
+    const promise = op1.exec({}, ctx);
     const cause = new Error('Operation cancelled');
-    run.cancel(cause);
+    ctx.cancel(cause);
     return chai.expect(promise).to.be.rejectedWith(cause);
   });
 });
@@ -34,16 +34,17 @@ describe('Bind Operation', function () {
   it('should work fine', () => {
     const op1 = Eff.immediate(() => 3);
     const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
-    return chai.expect(op2.run({}).toPromise()).to.eventually.equal(6);
+    return chai.expect(op2.exec({})).to.eventually.equal(6);
   });
 
   it('can be cancelled', () => {
+    const ctx = new Context();
     const op1 = Eff.immediate(() => 3);
     const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
-    const run = op2.run({});
+    const promise = op2.exec({}, ctx);
     const cause = new Error('Operation cancelled');
-    run.cancel(cause);
-    return chai.expect(run.toPromise()).to.be.rejectedWith(cause);
+    ctx.cancel(cause);
+    return chai.expect(promise).to.be.rejectedWith(cause);
   });
 
   it('can handle exceptions', () => {
@@ -51,7 +52,7 @@ describe('Bind Operation', function () {
     const op2 = op1.chain((multiplier) => Eff.immediate(() => {
       throw new Error('No need for a ' + multiplier);
     }));
-    return chai.expect(op2.run({}).toPromise()).to.be.rejectedWith('No need for a 3');
+    return chai.expect(op2.exec({})).to.be.rejectedWith('No need for a 3');
   });
 
   it('trampolines', () => {

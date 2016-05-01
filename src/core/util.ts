@@ -17,8 +17,7 @@ export class EffUtil {
   }
 
   static fromFunction<T>(f: (abortCallback: (abort: (reason:Error) => void) => void) => Promise<T>): Run<T> {
-    let onCancel: (e: Error) => void;
-    return new Run(f(abort => onCancel = abort), e => onCancel(e));
+    return new Run(ctx => f(abort => ctx.onCancel(abort)));
   }
 
   private static scheduledRun<F, T>(block: () => T, delay: number): Run<T> {

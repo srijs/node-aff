@@ -22,7 +22,7 @@ export class Eff<F, T> {
    */
   public exec(inj: F, ctx?: Context): Promise<T> {
     ctx = ctx || new Context();
-    return ctx.withCancel(() => this.run(inj));
+    return this.run(inj).toPromise(ctx);
   }
 
   /**
@@ -91,13 +91,6 @@ export class Eff<F, T> {
    */
   public recover<G>(f: (err: Error) => Eff<G, T>): Eff<F & G, T> {
     return new Eff((inj: F & G) => this.run(inj).catch(err => f(err).run(inj)));
-  }
-
-  /**
-   * Promotes any error to the value level.
-   */
-  public attempt(): Eff<F, T | Error> {
-    return new Eff((inj: F) => this.run(inj).catch(err => Run.of(err)));
   }
 
   /**
