@@ -18,7 +18,7 @@ describe('Util', () => {
       await chai.expect(util.forEach([], (x: number) => new Eff(() => {
         called++;
         return Run.of(null);
-      })).run({}).toPromise()).to.eventually.be.eq(null);
+      })).exec({})).to.eventually.be.eq(null);
       chai.expect(called).to.equal(0);
     });
 
@@ -27,7 +27,7 @@ describe('Util', () => {
       await chai.expect(util.forEach([1, 2, 3], (x: number) => new Eff(() => {
         list.push(x);
         return Run.of(null);
-      })).run({}).toPromise()).to.eventually.be.eq(null);
+      })).exec({})).to.eventually.be.eq(null);
       chai.expect(list).to.eql([1, 2, 3]);
     });
 

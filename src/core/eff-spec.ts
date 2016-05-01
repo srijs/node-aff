@@ -5,6 +5,7 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 
 import {Op, Eff} from './eff';
+import {Context} from './ctx';
 import {Run} from './run';
 import {EffUtil} from './util';
 
@@ -59,7 +60,7 @@ describe('Bind Operation', function () {
     for (let l = 0; l < numberOfLoops; l++) {
       operation = operation.chain((i:number) => Eff.of(i + 1));
     }
-    return chai.expect(operation.run({}).toPromise()).to.eventually.equal(numberOfLoops);
+    return chai.expect(operation.exec({})).to.eventually.equal(numberOfLoops);
   });
 
   it('trampolines with delay', () => {
@@ -68,7 +69,7 @@ describe('Bind Operation', function () {
     for (let l = 0; l < numberOfLoops; l++) {
       operation = operation.chain((i:number) => EffUtil.delay(() => i + 1));
     }
-    return chai.expect(operation.run({}).toPromise()).to.eventually.equal(numberOfLoops);
+    return chai.expect(operation.exec({})).to.eventually.equal(numberOfLoops);
   });
 
   it('trampolines with cancellation', () => {
@@ -83,10 +84,10 @@ describe('Bind Operation', function () {
         return i + 1;
       }));
     }
-    const run = operation.run({});
-    const promise = run.toPromise().then((success:number) => Promise.reject(finished), (reject:Error) => Promise.resolve(count));
+    const ctx = new Context();
+    const promise = operation.exec({}, ctx).then((success:number) => Promise.reject(finished), (reject:Error) => Promise.resolve(count));
     setTimeout(() => {
-      run.cancel(cause);
+      ctx.cancel(cause);
     }, 100);
     return chai.expect(promise).to.eventually.lessThan(numberOfLoops);
   });

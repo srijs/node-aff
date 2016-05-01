@@ -8,7 +8,7 @@ export function printRandom<F>(): Eff<{random: RANDOM, console: CONSOLE} & F, vo
   return random().chain(n => log(n));
 }
 
-printRandom().run({
+printRandom().exec({
   random: new RealWorldRandom(),
   console: new RealWorldConsole()
-}).toPromise();
+});

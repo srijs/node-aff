@@ -1,6 +1,7 @@
 'use strict';
 
 import {Run} from './run';
+import {Context} from './ctx';
 
 export type Op<X, T> = (x: X) => Run<T>;
 
@@ -15,7 +16,18 @@ export class Eff<F, T> {
 
   /**
    * Runs the effectful computation by supplying the necessary
-   * effect handlers, resulting in a promise.
+   * effect handlers and an optional context, resulting in a promise.
+   *
+   * @param inj The map of required effect handlers.
+   */
+  public exec(inj: F, ctx?: Context): Promise<T> {
+    ctx = ctx || new Context();
+    return ctx.withCancel(() => this.run(inj));
+  }
+
+  /**
+   * Runs the effectful computation by supplying the necessary
+   * effect handlers, resulting in a Run.
    *
    * @param inj The map of required effect handlers.
    */
