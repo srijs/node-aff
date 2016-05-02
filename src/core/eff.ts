@@ -113,7 +113,7 @@ export class Eff<F, T> {
    *
    * @param f The effectful mapping function.
    */
-  public chain<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U> {
+  public andThen<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U> {
     return new Eff((ctx: Context<F & G>) => {
       return ctx.withChild(cctx => this.run(cctx)).then(err => {
         return ctx.withChild(cctx => f(err).run(cctx));

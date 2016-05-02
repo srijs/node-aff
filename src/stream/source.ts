@@ -13,15 +13,15 @@ export class Source<Fx, Output> {
 
   static empty<Fx, Output>(): Source<Fx, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
-      return sink.onStart().chain((state: State) => sink.onEnd(state));
+      return sink.onStart().andThen((state: State) => sink.onEnd(state));
     });
   }
 
   static singleton<Fx, Output>(output: Output): Source<Fx, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
       return sink.onStart()
-        .chain((init: State) => sink.onData(init, output))
-        .chain((state: State) => sink.onEnd(state));
+        .andThen((init: State) => sink.onData(init, output))
+        .andThen((state: State) => sink.onEnd(state));
     });
   }
 
@@ -35,7 +35,7 @@ export class Source<Fx, Output> {
         onStart: () => sink.onStart(),
         onData: (state: State, output: Output) => sink.onData(state, output),
         onEnd: (intermediateState: State) => {
-          return f.chain((next) => {
+          return f.andThen((next) => {
             return next.pipe({
               onStart: () => Eff.of<Fx2, State>(intermediateState),
               onData: (state: State, output: Output) => sink.onData(state, output),
@@ -81,11 +81,11 @@ export class Source<Fx, Output> {
 
   static fromArray<Output>(arr: Array<Output>): Source<{}, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
-      return sink.onStart().chain((init: State) => {
+      return sink.onStart().andThen((init: State) => {
         return fold(arr, (state: State, output: Output) => {
           return sink.onData(state, output);
         }, init);
-      }).chain((state: State) => {
+      }).andThen((state: State) => {
         return sink.onEnd(state);
       });
     });

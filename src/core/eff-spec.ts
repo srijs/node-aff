@@ -33,14 +33,14 @@ describe('Bind Operation', function () {
 
   it('should work fine', () => {
     const op1 = Eff.immediate(() => 3);
-    const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
+    const op2 = op1.andThen((multiplier) => Eff.immediate(() => 2 * multiplier));
     return chai.expect(op2.exec({})).to.eventually.equal(6);
   });
 
   it('can be cancelled', () => {
     const ctx = new Context({});
     const op1 = Eff.immediate(() => 3);
-    const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
+    const op2 = op1.andThen((multiplier) => Eff.immediate(() => 2 * multiplier));
     const promise = op2.run(ctx);
     const cause = new Error('Operation cancelled');
     ctx.cancel(cause);
@@ -49,7 +49,7 @@ describe('Bind Operation', function () {
 
   it('can handle exceptions', () => {
     const op1 = Eff.immediate(() => 3);
-    const op2 = op1.chain((multiplier) => Eff.immediate(() => {
+    const op2 = op1.andThen((multiplier) => Eff.immediate(() => {
       throw new Error('No need for a ' + multiplier);
     }));
     return chai.expect(op2.exec({})).to.be.rejectedWith('No need for a 3');
@@ -59,7 +59,7 @@ describe('Bind Operation', function () {
     let operation = Eff.immediate(() => 0);
     const numberOfLoops = 20000;
     for (let l = 0; l < numberOfLoops; l++) {
-      operation = operation.chain((i:number) => Eff.of(i + 1));
+      operation = operation.andThen((i:number) => Eff.of(i + 1));
     }
     return chai.expect(operation.exec({})).to.eventually.equal(numberOfLoops);
   });
@@ -68,7 +68,7 @@ describe('Bind Operation', function () {
     let operation = Eff.immediate(() => 0);
     const numberOfLoops = 20000;
     for (let l = 0; l < numberOfLoops; l++) {
-      operation = operation.chain((i:number) => EffUtil.delay(() => i + 1));
+      operation = operation.andThen((i:number) => EffUtil.delay(() => i + 1));
     }
     return chai.expect(operation.exec({})).to.eventually.equal(numberOfLoops);
   });
@@ -80,7 +80,7 @@ describe('Bind Operation', function () {
     const finished = new Error('Operation should not have finished');
     let count = 0;
     for (let l = 0; l < numberOfLoops; l++) {
-      operation = operation.chain((i:number) => EffUtil.delay(() => {
+      operation = operation.andThen((i:number) => EffUtil.delay(() => {
         count = i;
         return i + 1;
       }));

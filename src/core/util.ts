@@ -41,7 +41,7 @@ export function forEach<F, T, U>(arr: Array<T>, f: (x: T) => Eff<F, void>): Eff<
     if (i >= arr.length) {
       return EffUtil.unit();
     }
-    return f(arr[i]).chain(() => {
+    return f(arr[i]).andThen(() => {
       return loop(i + 1);
     });
   };
@@ -53,7 +53,7 @@ export function fold<F, S, T, U>(arr: Array<T>, f: (s: S, x: T) => Eff<F, S>, in
     if (i >= arr.length) {
       return Eff.of<F, S>(state);
     }
-    return f(state, arr[i]).chain((newState) => {
+    return f(state, arr[i]).andThen((newState) => {
       return loop(newState, i + 1);
     });
   };
