@@ -4,9 +4,8 @@ import * as mocha from 'mocha';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 
-import {Op, Eff} from './eff';
+import {Eff} from './eff';
 import {Context} from './ctx';
-import {Run} from './run';
 import {EffUtil} from './util';
 
 chai.use(chaiAsPromised);
@@ -14,14 +13,15 @@ chai.use(chaiAsPromised);
 describe('Regular Operation', () => {
 
   it('should work fine', () => {
+    const ctx = new Context({});
     const op1 = Eff.immediate(() => 3);
-    return chai.expect(op1.exec({})).to.eventually.equal(3);
+    return chai.expect(op1.run(ctx)).to.eventually.equal(3);
   });
 
   it('can be cancelled', () => {
-    const ctx = new Context();
-    const op1 = Eff.immediate(() => 3);
-    const promise = op1.exec({}, ctx);
+    const ctx = new Context({});
+    const op1 = EffUtil.scheduledOnce(() => 3, 50);
+    const promise = op1.run(ctx);
     const cause = new Error('Operation cancelled');
     ctx.cancel(cause);
     return chai.expect(promise).to.be.rejectedWith(cause);
@@ -38,10 +38,10 @@ describe('Bind Operation', function () {
   });
 
   it('can be cancelled', () => {
-    const ctx = new Context();
+    const ctx = new Context({});
     const op1 = Eff.immediate(() => 3);
     const op2 = op1.chain((multiplier) => Eff.immediate(() => 2 * multiplier));
-    const promise = op2.exec({}, ctx);
+    const promise = op2.run(ctx);
     const cause = new Error('Operation cancelled');
     ctx.cancel(cause);
     return chai.expect(promise).to.be.rejectedWith(cause);
@@ -85,8 +85,8 @@ describe('Bind Operation', function () {
         return i + 1;
       }));
     }
-    const ctx = new Context();
-    const promise = operation.exec({}, ctx).then((success:number) => Promise.reject(finished), (reject:Error) => Promise.resolve(count));
+    const ctx = new Context({});
+    const promise = operation.run(ctx).then((success:number) => Promise.reject(finished), (reject:Error) => Promise.resolve(count));
     setTimeout(() => {
       ctx.cancel(cause);
     }, 100);

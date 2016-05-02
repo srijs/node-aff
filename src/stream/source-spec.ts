@@ -4,6 +4,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 
 import * as stream from 'stream';
 
+import {Context} from '../core/ctx';
 import {Source} from './source';
 
 chai.use(chaiAsPromised);

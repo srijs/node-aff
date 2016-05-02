@@ -1,15 +1,15 @@
 'use strict';
 
-import {Eff, Op, Run} from '../index';
+import {Eff} from '../index';
 
 export interface RANDOM {
-  random: Op<void, number>;
+  random: () => Promise<number>;
 }
 
 export class RealWorldRandom implements RANDOM {
-  random = () => Run.of(Math.random());
+  random = () => Promise.resolve(Math.random());
 }
 
 export function random<F>() {
-  return new Eff<{random: RANDOM} & F, number>(eff => eff.random.random(null));
+  return new Eff<{random: RANDOM} & F, number>(eff => eff.inj.random.random());
 }

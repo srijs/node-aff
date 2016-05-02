@@ -1,9 +1,6 @@
 'use strict';
 
-import {Run} from './run';
 import {Context} from './ctx';
-
-export type Op<X, T> = (x: X) => Run<T>;
 
 /**
  * Represents an asynchronous, effectful computation.
@@ -12,28 +9,28 @@ export type Op<X, T> = (x: X) => Run<T>;
  * @param T The type of the result of the computation.
  */
 export class Eff<F, T> {
-  public constructor(private op: Op<F, T>) {}
+  public constructor(private op: (ctx: Context<F>) => Promise<T>) {}
 
   /**
    * Runs the effectful computation by supplying the necessary
-   * effect handlers and an optional context, resulting in a promise.
+   * effect handlers in a context, resulting in a promise.
    *
-   * @param inj The map of required effect handlers.
+   * @param ctx The context with a map of required effect handlers.
    */
-  public exec(inj: F, ctx?: Context): Promise<T> {
-    ctx = ctx || new Context();
-    return this.run(inj).toPromise(ctx);
+  public run(ctx: Context<F>): Promise<T> {
+    // trampoline left-associatively by calling the op inside a Promise#then`
+    return Promise.resolve(null).then(() => this.op(ctx));
   }
 
   /**
    * Runs the effectful computation by supplying the necessary
-   * effect handlers, resulting in a Run.
+   * effect handlers, resulting in a promise.
    *
    * @param inj The map of required effect handlers.
    */
-  public run(inj: F): Run<T> {
-    // trampoline left-associatively by calling the op inside a Run#chain
-    return Run.of(null).chain(() => this.op(inj));
+  public exec(inj: F): Promise<T> {
+    const ctx = new Context(inj);
+    return this.run(ctx);
   }
 
   /**
@@ -43,7 +40,7 @@ export class Eff<F, T> {
    * @param x The value to lift.
    */
   public static of<F, T>(x: T): Eff<F, T> {
-    return new Eff(_ => Run.of(x));
+    return new Eff(_ => Promise.resolve(x));
   }
 
   /**
@@ -54,7 +51,12 @@ export class Eff<F, T> {
    * @param f The function to lift.
    */
   public static immediate<F, T>(f: () => T): Eff<F, T> {
-    return new Eff(_ => Run.immediate(f));
+    return new Eff(_ => new Promise((resolve, reject) => {
+      setImmediate(() => {
+        try { resolve(f()); }
+        catch (err) { reject(err); }
+      });
+    }));
   }
 
   /**
@@ -63,7 +65,7 @@ export class Eff<F, T> {
    * @type T The type of the value.
    */
   public static never<F, T>(): Eff<F, T> {
-    return new Eff(_ => Run.never());
+    return new Eff(_ => new Promise(() => {}));
   }
 
   /**
@@ -72,7 +74,7 @@ export class Eff<F, T> {
    * @param err The error to lift.
    */
   public static throwError<T>(err: Error): Eff<{}, T> {
-    return new Eff(_ => Run.fail<T>(err));
+    return new Eff(_ => Promise.reject<T>(err));
   }
 
   /**
@@ -81,7 +83,7 @@ export class Eff<F, T> {
    * @param f The pure handler function.
    */
   public catchError(f: (err: Error) => T): Eff<F, T> {
-    return new Eff((inj: F) => this.run(inj).catch(err => Run.of(f(err))));
+    return new Eff((ctx: Context<F>) => this.run(ctx).catch(err => f(err)));
   }
 
   /**
@@ -90,7 +92,11 @@ export class Eff<F, T> {
    * @param f The effectful handler function.
    */
   public recover<G>(f: (err: Error) => Eff<G, T>): Eff<F & G, T> {
-    return new Eff((inj: F & G) => this.run(inj).catch(err => f(err).run(inj)));
+    return new Eff((ctx: Context<F & G>) => {
+      return ctx.withChild(cctx => this.run(cctx)).catch(err => {
+        return ctx.withChild(cctx => f(err).run(cctx));
+      });
+    });
   }
 
   /**
@@ -99,7 +105,7 @@ export class Eff<F, T> {
    * @param f The pure mapping function.
    */
   public map<U>(f: (x: T) => U): Eff<F, U> {
-    return new Eff((inj: F) => this.run(inj).chain(x => Run.of(f(x))));
+    return new Eff((ctx: Context<F>) => this.run(ctx).then(x => f(x)));
   }
 
   /**
@@ -108,7 +114,11 @@ export class Eff<F, T> {
    * @param f The effectful mapping function.
    */
   public chain<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U> {
-    return new Eff((inj: F & G) => this.run(inj).chain(x => f(x).run(inj)));
+    return new Eff((ctx: Context<F & G>) => {
+      return ctx.withChild(cctx => this.run(cctx)).then(err => {
+        return ctx.withChild(cctx => f(err).run(cctx));
+      });
+    });
   }
 
   /**
@@ -117,15 +127,11 @@ export class Eff<F, T> {
    * @param eff The second effectful computation.
    */
   public parallel<G, U>(eff: Eff<G, U>): Eff<F & G, [T, U]> {
-    return new Eff((inj: F & G) => this.run(inj).and(eff.run(inj)));
-  }
-
-  /**
-   * Translates one effect to another using a contravariant mapping.
-   *
-   * @param t The contravariant function.
-   */
-  public translate<G>(t: (inj: G) => F): Eff<G, T> {
-    return new Eff((inj: G) => this.run(t(inj)));
+    return new Eff((ctx: Context<F & G>) => {
+      return Promise.all([
+        ctx.withChild(cctx => this.run(cctx)),
+        ctx.withChild(cctx => eff.run(cctx))
+      ]);
+    });
   }
 }

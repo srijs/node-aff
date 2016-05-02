@@ -1,26 +1,25 @@
 'use strict';
 
 import {Eff} from './eff';
-import {Run} from './run';
 
 export class EffUtil {
   static scheduledOnce<F, T>(block: () => T, delay: number): Eff<F, T> {
-    return new Eff<F, T>(() => EffUtil.scheduledRun(block, delay));
+    return EffUtil.scheduledRun(block, delay);
   }
 
   static delay<F, T>(block: () => T): Eff<F, T> {
-    return new Eff(() => Run.of(block()));
+    return new Eff(() => Promise.resolve(block()));
   }
 
   static unit<F>():Eff<F, void> {
     return Eff.of(null);
   }
 
-  static fromFunction<T>(f: (abortCallback: (abort: (reason:Error) => void) => void) => Promise<T>): Run<T> {
-    return new Run(ctx => f(abort => ctx.onCancel(abort)));
+  static fromFunction<F, T>(f: (abortCallback: (abort: (reason:Error) => void) => void) => Promise<T>): Eff<F, T> {
+    return new Eff(ctx => f(abort => ctx.onCancel(abort)));
   }
 
-  private static scheduledRun<F, T>(block: () => T, delay: number): Run<T> {
+  private static scheduledRun<F, T>(block: () => T, delay: number): Eff<F, T> {
     return EffUtil.fromFunction(abortCallback => new Promise((resolve, reject) => {
       const timeoutObject = setTimeout(() => {
         try {

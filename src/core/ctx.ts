@@ -1,16 +1,18 @@
-import {Run} from './run';
-
-export class Context {
+export class Context<F> {
   private _cancelled = false;
   private _cancellationReason: Error;
   private _cancellationListeners: Array<(reason: Error) => void> = [];
-  private _children: Array<Context> = [];
+  private _children: Array<Context<F>> = [];
 
-  constructor(private _parent?: Context) {
+  constructor(private _inj: F, private _parent?: Context<F>) {
     if (_parent && _parent._cancelled) {
       this._cancelled = true;
       this._cancellationReason = _parent._cancellationReason;
     }
+  }
+
+  get inj(): F {
+    return this._inj;
   }
 
   cancel(reason: Error) {
@@ -34,25 +36,14 @@ export class Context {
   }
 
   onCancel(cancel: (reason: Error) => void) {
-    this._addListener(cancel);
-  }
-
-  private _addListener(cancel: (reason: Error) => void) {
     this._cancellationListeners.push(cancel);
   }
 
-  private _clearListener(cancel: (reason: Error) => void) {
-    const idx = this._cancellationListeners.indexOf(cancel);
-    if (idx >= 0) {
-      this._cancellationListeners.splice(idx, 1);
-    }
-  }
-
-  private _addChild(child: Context) {
+  private _addChild(child: Context<F>) {
     this._children.push(child);
   }
 
-  private _clearChild(child: Context) {
+  private _clearChild(child: Context<F>) {
     const idx = this._children.indexOf(child);
     if (idx >= 0) {
       this._children.splice(idx, 1);
@@ -66,9 +57,9 @@ export class Context {
     return action();
   }
 
-  withChild<T>(action: (ctx: Context) => Promise<T>): Promise<T> {
+  withChild<T>(action: (ctx: Context<F>) => Promise<T>): Promise<T> {
     return this.guard(() => {
-      const child = new Context(this);
+      const child = new Context(this._inj, this);
       this._addChild(child);
       return action(child).then(value => {
         this._clearChild(child);

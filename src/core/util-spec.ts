@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 
 import {Eff} from './eff';
-import {Run} from './run';
+import {Context} from './ctx';
 import * as util from './util';
 
 chai.use(chaiAsPromised);
@@ -17,7 +17,7 @@ describe('Util', () => {
       let called = 0;
       await chai.expect(util.forEach([], (x: number) => new Eff(() => {
         called++;
-        return Run.of(null);
+        return Promise.resolve(null);
       })).exec({})).to.eventually.be.eq(null);
       chai.expect(called).to.equal(0);
     });
@@ -26,7 +26,7 @@ describe('Util', () => {
       const list: Array<number> = [];
       await chai.expect(util.forEach([1, 2, 3], (x: number) => new Eff(() => {
         list.push(x);
-        return Run.of(null);
+        return Promise.resolve(null);
       })).exec({})).to.eventually.be.eq(null);
       chai.expect(list).to.eql([1, 2, 3]);
     });
