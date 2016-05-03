@@ -94,3 +94,33 @@ describe('Bind Operation', function () {
   });
 
 });
+
+describe('Eff', () => {
+
+  describe('cancel', () => {
+
+    it('results in an error', () => {
+      const reason = new Error('Operation cancelled');
+      const promise = Eff.cancel(reason).exec({});
+      return chai.expect(promise).to.be.rejectedWith(reason);
+    });
+
+    it('cancels parallel effects to the left', (done) => {
+      const reason = new Error('Operation cancelled');
+      new Eff(ctx => {
+        ctx.onCancel(() => { done(); });
+        return new Promise(() => {});
+      }).parallel(Eff.cancel(reason)).exec({});
+    });
+
+    it('cancels parallel effects to the right', (done) => {
+      const reason = new Error('Operation cancelled');
+      Eff.cancel(reason).parallel(new Eff(ctx => {
+        ctx.onCancel(() => { done(); });
+        return new Promise(() => {});
+      })).exec({});
+    });
+
+  });
+
+});

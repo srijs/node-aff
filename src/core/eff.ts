@@ -69,6 +69,18 @@ export class Eff<F, T> {
   }
 
   /**
+   * Returns an effect that when run, cancels the computation.
+   *
+   * @type T The type of the value.
+   */
+  public static cancel<F, T>(reason: Error): Eff<F, T> {
+    return new Eff(ctx => {
+      ctx.cancel(reason);
+      return Promise.reject<T>(reason);
+    });
+  }
+
+  /**
    * Lifts an error into a pure effect, causing it to fail.
    *
    * @param err The error to lift.
