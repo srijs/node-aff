@@ -37,7 +37,7 @@ import {random} from 'aff/std/random';
 import {log} from 'aff/std/console';
 
 function printRandom() {
-  return random().chain(n => log(n));
+  return random().andThen(n => log(n));
 }
 ```
 
@@ -55,7 +55,7 @@ import {RANDOM, random} from 'aff/std/random';
 import {CONSOLE, log} from 'aff/std/console';
 
 function printRandom<F>(): Eff<{random: RANDOM, console: CONSOLE} & F, void> {
-  return random().chain(n => log(n));
+  return random().andThen(n => log(n));
 }
 ```
 
@@ -71,7 +71,7 @@ import {RANDOM, random} from 'aff/std/random';
 import {CONSOLE, log} from 'aff/std/console';
 
 function printRandom<F>(): Eff<{random: RANDOM} & F, void> {
-  return random().chain(n => log(n));
+  return random().andThen(n => log(n));
 }
 ```
 
@@ -88,11 +88,11 @@ Uh oh, that looks like the compiler is not happy: It is complaining that our sig
 
 #### In Sequence
 
-To combine two effectful computations in sequence, the `chain` function can be used, which works roughly the same as `then` in Promise land. It takes an effectful computation and chains a function after it, so that it will get called with the result of the computation. The function in turn returns a new effectful computation. To understand things in detail, we need to take a look at the type signature:
+To combine two effectful computations in sequence, the `andThen` function can be used, which works roughly the same as `then` in Promise land. It takes an effectful computation and chains a function after it, so that it will get called with the result of the computation. The function in turn returns a new effectful computation. To understand things in detail, we need to take a look at the type signature:
 
 ```
 class Eff<F, T> {
-    public chain<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U>;
+    public andThen<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U>;
 }
 ```
 
@@ -142,11 +142,9 @@ But while PureScript introduces a new type kind to label effects, this project l
 
 ```
 export interface CONSOLE {
-  log: Op<{data: any}, void>; // an action with {data: any} as input and void as output
+  log: (data: any) => Promise<void>;
   ...
 }
 ```
 
-`Op` is just a type alias for a kleisli arrow of the `Run` monad, so `Op<{data: any}, void>` is just short-hand for `(arg: {data: any}) => Run<void>`.
-
-Basically, `Eff` uses a [van Laarhoven representation](http://r6.ca/blog/20140210T181244Z.html) to describe its actions. But instead of being a completely free monad, it is specialised to `Run`. As a result, it sits in a sweet spot where it is more powerful than a simple effect system, and less powerful than a full-fledged free monad.
+Basically, `Eff` uses a [van Laarhoven representation](http://r6.ca/blog/20140210T181244Z.html) to describe its actions. But instead of being a completely free monad, it is specialised to `Promise`. As a result, it sits in a sweet spot where it is more powerful than a simple effect system, and less powerful than a full-fledged free monad.
