@@ -60,6 +60,13 @@ export class Eff<F, T> {
   }
 
   /**
+   * Returns a pure effect that immediately results in void.
+   */
+  public static unit<F>(): Eff<F, void> {
+    return Eff.of(null);
+  }
+
+  /**
    * Returns a pure effect that never returns.
    *
    * @type T The type of the value.

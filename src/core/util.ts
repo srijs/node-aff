@@ -11,10 +11,6 @@ export class EffUtil {
     return new Eff(() => Promise.resolve(block()));
   }
 
-  static unit<F>():Eff<F, void> {
-    return Eff.of(null);
-  }
-
   static fromFunction<F, T>(f: (abortCallback: (abort: (reason:Error) => void) => void) => Promise<T>): Eff<F, T> {
     return new Eff(ctx => f(abort => ctx.onCancel(abort)));
   }
@@ -39,7 +35,7 @@ export class EffUtil {
 export function forEach<F, T, U>(arr: Array<T>, f: (x: T) => Eff<F, void>): Eff<F, void> {
   function loop(i: number): Eff<F, void> {
     if (i >= arr.length) {
-      return EffUtil.unit();
+      return Eff.unit();
     }
     return f(arr[i]).andThen(() => {
       return loop(i + 1);
