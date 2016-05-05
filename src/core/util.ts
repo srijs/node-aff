@@ -7,10 +7,6 @@ export class EffUtil {
     return EffUtil.scheduledRun(block, delay);
   }
 
-  static delay<F, T>(block: () => T): Eff<F, T> {
-    return new Eff(() => Promise.resolve(block()));
-  }
-
   static fromFunction<F, T>(f: (abortCallback: (abort: (reason:Error) => void) => void) => Promise<T>): Eff<F, T> {
     return new Eff(ctx => f(abort => ctx.onCancel(abort)));
   }

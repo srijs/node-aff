@@ -44,13 +44,15 @@ export class Eff<F, T> {
   }
 
   /**
-   * Lifts a nullary function into a pure effect which is scheduled
-   * via setImmediate.
+   * Lifts a nullary function into a pure effect.
+   * The function will be executed in another tick after the effect
+   * has started to run. If it throws an exception, it is caught
+   * and expressed as a failure of the effect.
    *
    * @type T The type of the value.
    * @param f The function to lift.
    */
-  public static immediate<F, T>(f: () => T): Eff<F, T> {
+  public static try<F, T>(f: () => T): Eff<F, T> {
     return new Eff(_ => new Promise((resolve, reject) => {
       setImmediate(() => {
         try { resolve(f()); }
