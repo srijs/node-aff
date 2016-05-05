@@ -6,7 +6,6 @@ import * as chaiAsPromised from 'chai-as-promised';
 
 import {Eff} from './eff';
 import {Context} from './ctx';
-import {EffUtil} from './util';
 
 chai.use(chaiAsPromised);
 
@@ -20,7 +19,7 @@ describe('Regular Operation', () => {
 
   it('can be cancelled', () => {
     const ctx = new Context({});
-    const op1 = EffUtil.scheduledOnce(() => 3, 50);
+    const op1 = Eff.delayed(50, () => 3);
     const promise = op1.run(ctx);
     const cause = new Error('Operation cancelled');
     ctx.cancel(cause);

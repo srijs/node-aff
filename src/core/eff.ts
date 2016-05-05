@@ -62,6 +62,28 @@ export class Eff<F, T> {
   }
 
   /**
+   * Lifts a nullary function into a pure effect, to be executed
+   * after a timeout. If it throws an exception, it is caught
+   * and expressed as a failure of the effect.
+   *
+   * @type T The type of the value.
+   * @param delay The delay in milliseconds
+   * @param f The function to lift.
+   */
+  public static delayed<F, T>(delay: number, f: () => T): Eff<F, T> {
+    return new Eff(ctx => new Promise((resolve, reject) => {
+      const timeoutObject = setTimeout(() => {
+        try { resolve(f()); }
+        catch (e) { reject(e); }
+      }, delay);
+      ctx.onCancel(reason => {
+        clearTimeout(timeoutObject);
+        reject(reason);
+      });
+    }));
+  }
+
+  /**
    * Returns a pure effect that immediately results in void.
    */
   public static unit<F>(): Eff<F, void> {
