@@ -19,7 +19,7 @@ describe('Regular Operation', () => {
 
   it('can be cancelled', () => {
     const ctx = new Context({});
-    const op1 = Eff.delayed(50, () => 3);
+    const op1 = Eff.try(() => 3).delay(50);
     const promise = op1.run(ctx);
     const cause = new Error('Operation cancelled');
     ctx.cancel(cause);
