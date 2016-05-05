@@ -1,3 +1,6 @@
 machine:
   node:
     version: "4.2"
+test:
+  post:
+    - istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- out/**/*-spec.js -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
