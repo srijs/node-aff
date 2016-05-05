@@ -153,4 +153,43 @@ export class Eff<F, T> {
       ]);
     });
   }
+
+  /**
+   * Executes the given function once for every item in the array, in order.
+   *
+   * @param arr The array to iterate over
+   * @param f The iterator function
+   */
+  static forEach<F, T, U>(arr: Array<T>, f: (x: T) => Eff<F, void>): Eff<F, void> {
+    function loop(i: number): Eff<F, void> {
+      if (i >= arr.length) {
+        return Eff.unit();
+      }
+      return f(arr[i]).andThen(() => {
+        return loop(i + 1);
+      });
+    };
+    return loop(0);
+  }
+
+  /**
+   * Executes the given function once for every item in the array,
+   * while carrying state around.
+   *
+   * @param arr The array to iterate over
+   * @param f The iterator function
+   * @param init The initial state
+   */
+  static fold<F, S, T, U>(arr: Array<T>, f: (s: S, x: T) => Eff<F, S>, init: S): Eff<F, S> {
+    function loop(state: S, i: number): Eff<F, S> {
+      if (i >= arr.length) {
+        return Eff.of<F, S>(state);
+      }
+      return f(state, arr[i]).andThen((newState) => {
+        return loop(newState, i + 1);
+      });
+    };
+    return loop(init, 0);
+  }
+
 }

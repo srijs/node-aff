@@ -1,5 +1,4 @@
 import {Eff} from '../core/eff';
-import {fold} from '../core/util';
 
 import {SinkInterface} from './sink';
 import {fromInputStream} from './compat/input';
@@ -82,7 +81,7 @@ export class Source<Fx, Output> {
   static fromArray<Output>(arr: Array<Output>): Source<{}, Output> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Output, State, Result>) => {
       return sink.onStart().andThen((init: State) => {
-        return fold(arr, (state: State, output: Output) => {
+        return Eff.fold(arr, (state: State, output: Output) => {
           return sink.onData(state, output);
         }, init);
       }).andThen((state: State) => {
