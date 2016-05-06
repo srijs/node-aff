@@ -155,6 +155,24 @@ describe('Stream', () => {
         return chai.expect(promise).to.eventually.be.rejectedWith(err);
       });
 
+      it('fails when input stream fails', () => {
+        const str = new stream.PassThrough({highWaterMark: 1024});
+        const err = new Error('yep this is an error');
+        const src = Source.fromInputStream(() => {
+          setImmediate(() => {
+            str.emit('error', err);
+            str.end();
+          });
+          return str;
+        });
+        const promise = src.pipe({
+          onStart: () => Eff.of(null),
+          onData: () => Eff.of(null),
+          onEnd: () => Eff.of(null)
+        }).exec({});
+        return chai.expect(promise).to.eventually.be.rejectedWith(err);
+      });
+
     });
 
   });
