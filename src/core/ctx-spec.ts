@@ -26,4 +26,22 @@ describe('Context', () => {
 
   });
 
+  describe('withChild', () => {
+
+    it('short-circuits if the context has been cancelled', () => {
+      const ctx = new Context({});
+      const reason = new Error('yep this is an error');
+      ctx.cancel(reason);
+      const promise = ctx.withChild(cctx => Promise.resolve(42));
+      return chai.expect(promise).to.eventually.be.rejectedWith(reason);
+    });
+
+    it('executes the action if the context has not been cancelled', () => {
+      const ctx = new Context({});
+      const promise = ctx.withChild(cctx => Promise.resolve(42));
+      return chai.expect(promise).to.eventually.equal(42);
+    });
+
+  });
+
 });
