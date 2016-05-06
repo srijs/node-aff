@@ -22,11 +22,7 @@ export class Sink<Fx, Input, State, Result> implements SinkInterface<Fx, Input, 
   }
 
   static unit<Fx, Input>(): Sink<Fx, Input, void, void> {
-    return new Sink<Fx, Input, void, void>({
-      onStart: () => Eff.of<Fx, void>(null),
-      onData: () => Eff.of<Fx, void>(null),
-      onEnd: () => Eff.of<Fx, void>(null)
-    });
+    return Sink.const(null);
   }
 
   static const<Fx, Input, Result>(res: Result): Sink<Fx, Input, Result, Result> {
