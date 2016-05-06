@@ -3,11 +3,15 @@ export class Context<F> {
   private _cancellationReason: Error;
   private _cancellationListeners: Array<(reason: Error) => void> = [];
   private _children: Array<Context<F>> = [];
+  private _parent: Context<F>;
 
-  constructor(private _inj: F, private _parent?: Context<F>) {
-    if (_parent && _parent._cancelled) {
+  constructor(private _inj: F) {}
+
+  private _setParent(parent: Context<F>) {
+    this._parent = parent;
+    if (parent._cancelled) {
       this._cancelled = true;
-      this._cancellationReason = _parent._cancellationReason;
+      this._cancellationReason = parent._cancellationReason;
     }
   }
 
@@ -59,7 +63,8 @@ export class Context<F> {
 
   withChild<T>(action: (ctx: Context<F>) => Promise<T>): Promise<T> {
     return this.guard(() => {
-      const child = new Context(this._inj, this);
+      const child = new Context(this._inj);
+      child._setParent(this);
       this._addChild(child);
       return action(child).then(value => {
         this._clearChild(child);
