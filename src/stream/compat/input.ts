@@ -26,15 +26,16 @@ class FeedingStream<F, A> extends stream.Writable {
   }
 }
 
-function feed<F, A>(input: NodeJS.ReadableStream, init: A, step: (state: A, buf: Buffer) => Eff<F, A>): Eff<F, A> {
+function feed<F, A>(input: () => NodeJS.ReadableStream, init: A, step: (state: A, buf: Buffer) => Eff<F, A>): Eff<F, A> {
   return new Eff<F, A>((ctx: Context<F>) => {
     const s = new FeedingStream(ctx, init, step);
+    const t = input();
     const p = new Promise((resolve, reject) => {
-      input.on('error', reject);
+      t.on('error', reject);
       s.on('finish', () => resolve(s.state));
       s.on('error', reject);
     });
-    input.pipe(s);
+    t.pipe(s);
     return p;
   });
 }
@@ -42,7 +43,7 @@ function feed<F, A>(input: NodeJS.ReadableStream, init: A, step: (state: A, buf:
 export function fromInputStream<F>(input: () => NodeJS.ReadableStream): Source<F, Buffer> {
   return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Buffer, State, Result>) => {
     return sink.onStart().andThen((init: State) => {
-      return feed(input(), init, (state, buf) => sink.onData(state, buf));
+      return feed(input, init, (state, buf) => sink.onData(state, buf));
     }).andThen((state: State) => {
       return sink.onEnd(state);
     });
