@@ -39,10 +39,10 @@ function feed<F, A>(input: NodeJS.ReadableStream, init: A, step: (state: A, buf:
   });
 }
 
-export function fromInputStream<F>(input: NodeJS.ReadableStream): Source<F, Buffer> {
+export function fromInputStream<F>(input: () => NodeJS.ReadableStream): Source<F, Buffer> {
   return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Buffer, State, Result>) => {
     return sink.onStart().andThen((init: State) => {
-      return feed(input, init, (state, buf) => sink.onData(state, buf));
+      return feed(input(), init, (state, buf) => sink.onData(state, buf));
     }).andThen((state: State) => {
       return sink.onEnd(state);
     });

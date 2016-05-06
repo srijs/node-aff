@@ -100,14 +100,14 @@ describe('Stream', () => {
 
       it('produces an empty source from an empty stream', () => {
         const str = new stream.PassThrough({highWaterMark: 1024});
-        const src = Source.fromInputStream(str);
+        const src = Source.fromInputStream(() => str);
         str.end();
         return chai.expect(src.toArray().exec({})).to.eventually.deep.equal([]);
       });
 
       it('produces multiple chunks from a fed stream', () => {
         const str = new stream.PassThrough({highWaterMark: 1024});
-        const src = Source.fromInputStream(str);
+        const src = Source.fromInputStream(() => str);
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
         str.write(data1);
@@ -118,7 +118,7 @@ describe('Stream', () => {
 
       it('fails when the sink onStart fails', () => {
         const str = new stream.PassThrough({highWaterMark: 1024});
-        const src = Source.fromInputStream(str);
+        const src = Source.fromInputStream(() => str);
         const err = new Error('yep this is an error');
         str.end(new Buffer(1024));
         const promise = src.pipe({
@@ -131,7 +131,7 @@ describe('Stream', () => {
 
       it('fails when the sink onData fails', () => {
         const str = new stream.PassThrough({highWaterMark: 1024});
-        const src = Source.fromInputStream(str);
+        const src = Source.fromInputStream(() => str);
         const err = new Error('yep this is an error');
         str.end(new Buffer(1024));
         const promise = src.pipe({
@@ -144,7 +144,7 @@ describe('Stream', () => {
 
       it('fails when the sink onEnd fails', () => {
         const str = new stream.PassThrough({highWaterMark: 1024});
-        const src = Source.fromInputStream(str);
+        const src = Source.fromInputStream(() => str);
         const err = new Error('yep this is an error');
         str.end(new Buffer(1024));
         const promise = src.pipe({
