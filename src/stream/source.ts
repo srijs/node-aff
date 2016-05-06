@@ -1,6 +1,6 @@
 import {Eff} from '../core/eff';
 
-import {SinkInterface} from './sink';
+import {Sink, SinkInterface} from './sink';
 import {fromInputStream} from './compat/input';
 
 export class Source<Fx, Output> {
@@ -71,11 +71,7 @@ export class Source<Fx, Output> {
   }
 
   toArray(): Eff<Fx, Array<Output>> {
-    return this.pipe({
-      onStart: () => Eff.of([]),
-      onData: (arr, outp) => Eff.of(arr.concat([outp])),
-      onEnd: (arr) => Eff.of(arr)
-    });
+    return this.pipe(Sink.fold([], (arr, outp) => arr.concat([outp])));
   }
 
   static fromArray<Output>(arr: Array<Output>): Source<{}, Output> {
