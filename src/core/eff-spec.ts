@@ -96,6 +96,16 @@ describe('Bind Operation', function () {
 
 describe('Eff', () => {
 
+  describe('throwError', () => {
+
+    it('returns an effect that fails', () => {
+      const reason = new Error('Operation cancelled');
+      const promise = Eff.throwError(reason).exec({});
+      return chai.expect(promise).to.be.rejectedWith(reason);
+    });
+
+  });
+
   describe('cancel', () => {
 
     it('results in an error', () => {
