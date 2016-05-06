@@ -5,6 +5,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 import * as stream from 'stream';
 
 import {Context} from '../core/ctx';
+import {Eff} from '../core/eff';
 import {Source} from './source';
 
 chai.use(chaiAsPromised);
@@ -113,6 +114,45 @@ describe('Stream', () => {
         str.write(data2);
         str.end();
         return chai.expect(src.toArray().exec({})).to.eventually.deep.equal([data1, data2]);
+      });
+
+      it('fails when the sink onStart fails', () => {
+        const str = new stream.PassThrough({highWaterMark: 1024});
+        const src = Source.fromInputStream(str);
+        const err = new Error('yep this is an error');
+        str.end(new Buffer(1024));
+        const promise = src.pipe({
+          onStart: () => Eff.throwError(err),
+          onData: () => Eff.of(null),
+          onEnd: () => Eff.of(null)
+        }).exec({});
+        return chai.expect(promise).to.eventually.be.rejectedWith(err);
+      });
+
+      it('fails when the sink onData fails', () => {
+        const str = new stream.PassThrough({highWaterMark: 1024});
+        const src = Source.fromInputStream(str);
+        const err = new Error('yep this is an error');
+        str.end(new Buffer(1024));
+        const promise = src.pipe({
+          onStart: () => Eff.of(null),
+          onData: () => Eff.throwError(err),
+          onEnd: () => Eff.of(null)
+        }).exec({});
+        return chai.expect(promise).to.eventually.be.rejectedWith(err);
+      });
+
+      it('fails when the sink onEnd fails', () => {
+        const str = new stream.PassThrough({highWaterMark: 1024});
+        const src = Source.fromInputStream(str);
+        const err = new Error('yep this is an error');
+        str.end(new Buffer(1024));
+        const promise = src.pipe({
+          onStart: () => Eff.of(null),
+          onData: () => Eff.of(null),
+          onEnd: () => Eff.throwError(err)
+        }).exec({});
+        return chai.expect(promise).to.eventually.be.rejectedWith(err);
       });
 
     });
