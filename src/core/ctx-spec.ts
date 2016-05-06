@@ -8,6 +8,15 @@ chai.use(chaiAsPromised);
 
 describe('Context', () => {
 
+  describe('inj', () => {
+
+    it('retrieves the value passed to the constructor', () => {
+      const ctx = new Context(42);
+      chai.expect(ctx.inj).to.be.equal(42);
+    });
+
+  });
+
   describe('guard', () => {
 
     it('short-circuits if the context has been cancelled', () => {
