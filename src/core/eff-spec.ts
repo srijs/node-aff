@@ -106,6 +106,21 @@ describe('Eff', () => {
 
   });
 
+  describe('catchError', () => {
+
+    it('does nothing in the absence of errors', () => {
+      const promise = Eff.of(42).catchError(err => 300).exec({});
+      return chai.expect(promise).to.eventually.equal(42);
+    });
+
+    it('catches the error and replaces the result', () => {
+      const reason = new Error('Operation cancelled');
+      const promise = Eff.throwError(reason).catchError(err => 300).exec({});
+      return chai.expect(promise).to.eventually.equal(300);
+    });
+
+  });
+
   describe('cancel', () => {
 
     it('results in an error', () => {
