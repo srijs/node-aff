@@ -47,6 +47,24 @@ describe('Stream', () => {
 
     });
 
+    describe('parallel', () => {
+
+      it('returns both results when run with an empty input', () => {
+        const sink = Sink.const(42).parallel(Sink.const('foo'));
+        const source = Source.empty();
+        const promise = source.pipe(sink).exec({});
+        return chai.expect(promise).to.eventually.deep.equal([42, 'foo']);
+      });
+
+      it('returns both results when run with a non-empty input', () => {
+        const sink = Sink.const(42).parallel(Sink.const('foo'));
+        const source = Source.fromArray([1, 2, 3]);
+        const promise = source.pipe(sink).exec({});
+        return chai.expect(promise).to.eventually.deep.equal([42, 'foo']);
+      });
+
+    });
+
   });
 
 });
