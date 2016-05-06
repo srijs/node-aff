@@ -7,14 +7,6 @@ export class Context<F> {
 
   constructor(private _inj: F) {}
 
-  private _setParent(parent: Context<F>) {
-    this._parent = parent;
-    if (parent._cancelled) {
-      this._cancelled = true;
-      this._cancellationReason = parent._cancellationReason;
-    }
-  }
-
   get inj(): F {
     return this._inj;
   }
@@ -64,7 +56,7 @@ export class Context<F> {
   withChild<T>(action: (ctx: Context<F>) => Promise<T>): Promise<T> {
     return this.guard(() => {
       const child = new Context(this._inj);
-      child._setParent(this);
+      child._parent = this;
       this._addChild(child);
       return action(child).then(value => {
         this._clearChild(child);
