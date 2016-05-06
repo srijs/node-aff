@@ -181,6 +181,31 @@ describe('Eff', () => {
 
   });
 
+  describe('delay', () => {
+
+    it('succeeds when the effect succeeds', () => {
+      const promise = Eff.of(42).delay(20).exec({});
+      return chai.expect(promise).to.eventually.be.equal(42);
+    });
+
+    it('fails when the effect fails', () => {
+      const err = new Error('yep this is an error');
+      const promise = Eff.throwError(err).delay(20).exec({});
+      return chai.expect(promise).to.eventually.be.rejectedWith(err);
+    });
+
+    it('can be cancelled before the timeout', () => {
+      const err = new Error('yep this is an error');
+      const ctx = new Context({});
+      const promise = Eff.of(42).delay(20).run(ctx);
+      setTimeout(() => {
+        ctx.cancel(err);
+      }, 10);
+      return chai.expect(promise).to.eventually.be.rejectedWith(err);
+    });
+
+  });
+
   describe('forEach', () => {
 
     it('returns an empty effect for an empty list', async () => {
