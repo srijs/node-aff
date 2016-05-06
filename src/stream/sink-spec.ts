@@ -11,6 +11,24 @@ describe('Stream', () => {
 
   describe('Sink', () => {
 
+    describe('unit', () => {
+
+      it('returns null with an empty input', () => {
+        const sink = Sink.unit();
+        const source = Source.empty();
+        const promise = source.pipe(sink).exec({});
+        return chai.expect(promise).to.eventually.equal(null);
+      });
+
+      it('returns null with a non-empty input', () => {
+        const sink = Sink.unit();
+        const source = Source.fromArray([1, 2, 3]);
+        const promise = source.pipe(sink).exec({});
+        return chai.expect(promise).to.eventually.equal(null);
+      });
+
+    });
+
     describe('const', () => {
 
       it('returns the result with an empty input', () => {
