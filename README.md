@@ -1,4 +1,4 @@
-# node-aff [![CircleCI](https://img.shields.io/circleci/project/srijs/node-aff/master.svg?maxAge=2592000&style=flat-square)](https://circleci.com/gh/srijs/node-aff) [![Coveralls](https://img.shields.io/coveralls/srijs/node-aff/master.svg?maxAge=2592000&style=flat-square)](https://coveralls.io/github/srijs/node-aff)
+# node-aff [![CircleCI](https://img.shields.io/circleci/project/srijs/node-aff/master.svg?maxAge=2592000&style=flat-square)](https://circleci.com/gh/srijs/node-aff) [![Coveralls](https://img.shields.io/coveralls/srijs/node-aff/master.svg?maxAge=2592000&style=flat-square)](https://coveralls.io/github/srijs/node-aff) [![npm](https://img.shields.io/npm/v/aff.svg?maxAge=2592000&style=flat-square)](https://www.npmjs.com/package/aff)
 
 _Asynchronous effect system for TypeScript_
 
