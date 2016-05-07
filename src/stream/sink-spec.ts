@@ -122,18 +122,37 @@ describe('Stream', () => {
         });
       });
 
-      it('fails when the output stream fails (with buffering)', () => {
+      it('fails when the output stream fails during write', () => {
         const err = new Error('yep this is an error');
         const str = new stream.PassThrough({highWaterMark: 1024});
-        const sink = Sink.intoOutputStream(() => {
-          setImmediate(() => {
-            str.emit('error', err);
-          });
-          return str;
-        });
+        const sink = Sink.intoOutputStream(() => str);
+        const emitErr = new Eff(ctx => Promise.resolve(str.emit('error', err)));
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
-        const promiseSink = Source.fromArray([data1, data2]).pipe(sink).exec({});
+        const promiseSink = sink.onStart().andThen(state => {
+          return sink.onData(state, data1);
+        }).andThen(state => {
+          return sink.onData(state, data2).parallel(emitErr);
+        }).andThen(states => {
+          return sink.onEnd(states[0]);
+        }).exec({});
+        return chai.expect(promiseSink).to.eventually.be.rejectedWith(err);
+      });
+
+      it('fails when the output stream fails during end', () => {
+        const err = new Error('yep this is an error');
+        const str = new stream.PassThrough({highWaterMark: 2048});
+        const sink = Sink.intoOutputStream(() => str);
+        const emitErr = new Eff(ctx => Promise.resolve(str.emit('error', err)));
+        const data1 = new Buffer(1024);
+        const data2 = new Buffer(1024);
+        const promiseSink = sink.onStart().andThen(state => {
+          return sink.onData(state, data1);
+        }).andThen(state => {
+          return sink.onData(state, data2);
+        }).andThen(state => {
+          return sink.onEnd(state).parallel(emitErr);
+        }).exec({});
         return chai.expect(promiseSink).to.eventually.be.rejectedWith(err);
       });
 
