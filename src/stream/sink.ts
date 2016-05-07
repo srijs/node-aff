@@ -1,5 +1,7 @@
 import {Eff} from '../core/eff';
 
+import {IntoOutputStreamState, intoOutputStream} from './compat/output';
+
 export interface SinkInterface<Fx, Input, State, Result> {
   onStart: () => Eff<Fx, State>;
   onData: (s: State, i: Input) => Eff<Fx, State>;
@@ -60,5 +62,9 @@ export class Sink<Fx, Input, State, Result> implements SinkInterface<Fx, Input, 
       onData: (s, i) => this.onData(s[0], i).parallel(other.onData(s[1], i)),
       onEnd: (s) => this.onEnd(s[0]).parallel(other.onEnd(s[1]))
     });
+  }
+
+  static intoOutputStream<F>(output: () => NodeJS.WritableStream): Sink<F, Buffer, IntoOutputStreamState, void> {
+    return intoOutputStream(output);
   }
 }
