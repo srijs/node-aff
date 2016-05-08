@@ -3,5 +3,6 @@ pages:
 - Home: 'index.md'
 - User Guide:
     - 'Motivation': 'motivation.md'
+    - 'Introduction': 'introduction.md'
 - About:
     - 'Design': 'design.md'
