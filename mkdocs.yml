@@ -1,0 +1,7 @@
+site_name: 'node-aff Documentation'
+pages:
+- Home: 'index.md'
+- User Guide:
+    - 'Motivation': 'motivation.md'
+- About:
+    - 'Design': 'design.md'
