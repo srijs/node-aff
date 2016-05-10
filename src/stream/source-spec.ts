@@ -96,6 +96,20 @@ describe('Stream', () => {
 
     });
 
+    describe('filter', () => {
+
+      it('produces an empty source from an empty source', () => {
+        const src = Source.empty();
+        return chai.expect(src.filter(() => true).toArray().exec({})).to.eventually.deep.equal([]);
+      });
+
+      it('only produces elements for which the predicate returns true', () => {
+        const src = Source.fromArray([1,2,3,4,5,6]);
+        return chai.expect(src.filter(x => x % 2 === 0).toArray().exec({})).to.eventually.deep.equal([2,4,6]);
+      });
+
+    });
+
     describe('fromInputStream', () => {
 
       it('produces an empty source from an empty stream', () => {

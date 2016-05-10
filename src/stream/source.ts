@@ -70,6 +70,26 @@ export class Source<Fx, Output> {
     });
   }
 
+  filter(pred: (output: Output) => boolean): Source<Fx, Output> {
+    return this.statefulFilter(null, (state, output) => [state, pred(output)]);
+  }
+
+  statefulFilter<S>(init: S, pred: (state: S, output: Output) => [S, boolean]): Source<Fx, Output> {
+    return new Source(<Fx3, State, Result>(sink: SinkInterface<Fx3, Output, State, Result>) => {
+      return this.pipe<Fx3, [S, State], Result>({
+        onStart: () => sink.onStart().map(state => [init, state]),
+        onData: (state, output) => {
+          const res = pred(state[0], output);
+          if (!res[1]) {
+            return Eff.of([res[0], state[1]]);
+          }
+          return sink.onData(state[1], output).map(newState => [res[0], newState]);
+        },
+        onEnd: (state) => sink.onEnd(state[1])
+      });
+    });
+  }
+
   toArray(): Eff<Fx, Array<Output>> {
     return this.pipe(Sink.fold([], (arr, outp) => arr.concat([outp])));
   }
