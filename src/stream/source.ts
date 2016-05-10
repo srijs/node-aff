@@ -47,11 +47,18 @@ export class Source<Fx, Output> {
   }
 
   map<NewOutput>(f: (output: Output) => NewOutput): Source<Fx, NewOutput> {
+    return this.statefulMap(null, (state, output) => [state, f(output)]);
+  }
+
+  statefulMap<S, NewOutput>(init: S, f: (state: S, output: Output) => [S, NewOutput]): Source<Fx, NewOutput> {
     return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, NewOutput, State, Result>) => {
-      return this.pipe({
-        onStart: () => sink.onStart(),
-        onData: (state, output) => sink.onData(state, f(output)),
-        onEnd: (state) => sink.onEnd(state)
+      return this.pipe<Fx2, [S, State], Result>({
+        onStart: () => sink.onStart().map(state => [init, state]),
+        onData: (states, output) => {
+          const res = f(states[0], output);
+          return sink.onData(states[1], res[1]).map(state => [res[0], state]);
+        },
+        onEnd: (states) => sink.onEnd(states[1])
       });
     });
   }
