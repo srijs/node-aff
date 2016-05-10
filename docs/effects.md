@@ -1,14 +1,3 @@
-# About
-
-The `aff` effect system allows you to easily compose functions that have side-effects, while being completely in control over which effects those are and how they are executed. It mainly concerns itself with handling "native" effects, i.e. effects which are provided by the runtime system, and which cannot be emulated by pure functions.
-
-Some examples of native, asynchronous effects are:
-
-- Reading and writing files
-- Executing and handling network requests
-- Spawning and terminating processes
-- Performing expensive computations in the background
-
 # The `Eff` type
 
 The `aff` package defines a type called `Eff`, which describes an effectful computation. That computation can perform effects of some kind, and yields a result or an error.
@@ -92,27 +81,3 @@ class Eff<F, T> {
     public parallel<G, U>(eff: Eff<G, U>): Eff<F & G, [T, U]>;
 }
 ```
-
-# Streams
-
-Streams provide a simple but powerful streaming abstraction. They consist of two concepts: Sinks and Sources.
-
-## Sinks
-
-Sinks are stream consumers. More concretely, they describe how to reduce a stream, by providing three actions:
-
-- `onStart: () => Eff<Fx, State>`
-- `onData: (s: State, i: Input) => Eff<Fx, State>`
-- `onEnd: (s: State) => Eff<Fx, Result>`
-
-Those three actions are called in order during the lifecycle of the stream.
-When a stream starts, `onStart` is called, returning an effectful computation that results in an initial state. As data flows through the stream, `onData` is called multiple times with the current state
-and a bit of input, providing the next state. The next `onData` won't be called unless the effectful
-computation returned from the previous call terminates, providing a way to handle back-pressure.
-At the point where the stream is exhausted, `onEnd` will be called once with the last state, finalizing
-it into the end result.
-
-## Sources
-
-Sources are the objects that take a sink and run it. Two sources of the same type can be combined into a new source, which provides a simple way to build up sources from lots of different parts, concatenating
-many effectful data fetches.

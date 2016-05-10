@@ -2,7 +2,8 @@ site_name: 'node-aff Documentation'
 pages:
 - Home: 'index.md'
 - User Guide:
-    - 'Motivation': 'motivation.md'
-    - 'Introduction': 'introduction.md'
+    - 'Intro': 'intro.md'
+    - 'Effects': 'effects.md'
+    - 'Streams': 'streams.md'
 - About:
     - 'Design': 'design.md'

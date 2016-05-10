@@ -5,3 +5,14 @@ Side-effects are inevitable. What's more, without them, the software we write wo
 While it is commonly accepted that we want to keep the side-effects outside of the core logic of our programs as much as possible, which leads to code that is easier to test and refactor, it still means we can't avoid side-effects. At one point or another, but hopefully as marginally as possible in our program, we need to deal with them.
 
 Consequently, there is not only great merit in avoiding side-effects, but also in being able to exert as much control over them as possible at the inevitable point where we have to face them. In order for us as craftspeople to do that, we need to have the appropriate tools for the job.
+
+# About
+
+The `aff` effect system allows you to easily compose functions that have side-effects, while being completely in control over which effects those are and how they are executed. It mainly concerns itself with handling "native" effects, i.e. effects which are provided by the runtime system, and which cannot be emulated by pure functions.
+
+Some examples of native, asynchronous effects are:
+
+- Reading and writing files
+- Executing and handling network requests
+- Spawning and terminating processes
+- Performing expensive computations in the background
