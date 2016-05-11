@@ -54,6 +54,14 @@ export class Sink<Fx, Input, State, Result> implements SinkInterface<Fx, Input, 
     });
   }
 
+  effectfulMap<Fx2, NewResult>(f: (res: Result) => Eff<Fx2, NewResult>): Sink<Fx, Input, State, NewResult> {
+    return new Sink<Fx, Input, State, NewResult>({
+      onStart: () => this.onStart(),
+      onData: (s, i) => this.onData(s, i),
+      onEnd: (s) => this.onEnd(s).andThen(f)
+    });
+  }
+
   parallel<Fx2, OtherState, OtherResult>(
     other: Sink<Fx2, Input, OtherState, OtherResult>
   ): Sink<Fx & Fx2, Input, [State, OtherState], [Result, OtherResult]> {
