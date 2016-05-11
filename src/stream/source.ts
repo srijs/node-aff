@@ -63,6 +63,16 @@ export class Source<Fx, Output> {
     });
   }
 
+  effectfulMap<Fx2, NewOutput>(f: (output: Output) => Eff<Fx2, NewOutput>): Source<Fx & Fx2, NewOutput> {
+    return new Source(<Fx3, State, Result>(sink: SinkInterface<Fx3, NewOutput, State, Result>) => {
+      return this.pipe<Fx3, State, Result>({
+        onStart: () => sink.onStart(),
+        onData: (state, output) => f(output).andThen(newOutput => sink.onData(state, newOutput)),
+        onEnd: (state) => sink.onEnd(state)
+      });
+    });
+  }
+
   flatMap<Fx2, NewOutput>(f: (output: Output) => Source<Fx, NewOutput>): Source<Fx & Fx2, NewOutput> {
     return new Source(<Fx3, State, Result>(sink: SinkInterface<Fx3, NewOutput, State, Result>) => {
       return this.pipe<Fx3, State, Result>({

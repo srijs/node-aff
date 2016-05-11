@@ -82,6 +82,20 @@ describe('Stream', () => {
 
     });
 
+    describe('effectfulMap', () => {
+
+      it('produces an empty source from an empty source', () => {
+        const src = Source.empty();
+        return chai.expect(src.effectfulMap((x: number) => Eff.of(x + 1)).toArray().exec({})).to.eventually.deep.equal([]);
+      });
+
+      it('replaces each output with the result of the function', () => {
+        const src = Source.fromArray([1,2,3]);
+        return chai.expect(src.effectfulMap((x: number) => Eff.of(x + 1)).toArray().exec({})).to.eventually.deep.equal([2,3,4]);
+      });
+
+    });
+
     describe('flatMap', () => {
 
       it('produces an empty source from an empty source', () => {
