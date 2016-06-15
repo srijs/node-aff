@@ -1,17 +1,17 @@
 import * as stream from 'stream';
 
 import {Context} from '../../core/ctx';
-import {Eff} from '../../core/eff';
+import {Task} from '../../core/task';
 import {Source} from '../source';
 import {SinkInterface} from '../sink';
 
-class FeedingStream<F, A> extends stream.Writable {
+class FeedingStream<A> extends stream.Writable {
   public state: A;
 
   constructor(
-    private _ctx: Context<F>,
+    private _ctx: Context,
     private _init: A,
-    private _feed: (state: A, buf: Buffer) => Eff<F, A>,
+    private _feed: (state: A, buf: Buffer) => Task<A>,
     options?: Object
   ) {
     super(options);
@@ -26,8 +26,8 @@ class FeedingStream<F, A> extends stream.Writable {
   }
 }
 
-function feed<F, A>(input: () => NodeJS.ReadableStream, init: A, step: (state: A, buf: Buffer) => Eff<F, A>): Eff<F, A> {
-  return new Eff<F, A>((ctx: Context<F>) => {
+function feed<A>(input: () => NodeJS.ReadableStream, init: A, step: (state: A, buf: Buffer) => Task<A>): Task<A> {
+  return new Task<A>((ctx: Context) => {
     const s = new FeedingStream(ctx, init, step);
     const t = input();
     const p = new Promise((resolve, reject) => {
@@ -40,8 +40,8 @@ function feed<F, A>(input: () => NodeJS.ReadableStream, init: A, step: (state: A
   });
 }
 
-export function fromInputStream<F>(input: () => NodeJS.ReadableStream): Source<F, Buffer> {
-  return new Source(<Fx2, State, Result>(sink: SinkInterface<Fx2, Buffer, State, Result>) => {
+export function fromInputStream(input: () => NodeJS.ReadableStream): Source<Buffer> {
+  return new Source(<State, Result>(sink: SinkInterface<Buffer, State, Result>) => {
     return sink.onStart().andThen((init: State) => {
       return feed(input, init, (state, buf) => sink.onData(state, buf));
     }).andThen((state: State) => {

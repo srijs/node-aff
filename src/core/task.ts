@@ -5,11 +5,10 @@ import {Context} from './ctx';
 /**
  * Represents an asynchronous, effectful computation.
  *
- * @param F The type of the performed effects.
  * @param T The type of the result of the computation.
  */
-export class Eff<F, T> {
-  public constructor(private op: (ctx: Context<F>) => Promise<T>) {}
+export class Task<T> {
+  public constructor(private op: (ctx: Context) => Promise<T>) {}
 
   /**
    * Runs the effectful computation by supplying the necessary
@@ -17,7 +16,7 @@ export class Eff<F, T> {
    *
    * @param ctx The context with a map of required effect handlers.
    */
-  public run(ctx: Context<F>): Promise<T> {
+  public run(ctx: Context): Promise<T> {
     // trampoline left-associatively by calling the op inside a Promise#then`
     return Promise.resolve(null).then(() => this.op(ctx));
   }
@@ -28,8 +27,8 @@ export class Eff<F, T> {
    *
    * @param inj The map of required effect handlers.
    */
-  public exec(inj: F): Promise<T> {
-    const ctx = new Context(inj);
+  public exec(): Promise<T> {
+    const ctx = new Context();
     return this.run(ctx);
   }
 
@@ -39,8 +38,8 @@ export class Eff<F, T> {
    * @type T The type of the value.
    * @param x The value to lift.
    */
-  public static of<F, T>(x: T): Eff<F, T> {
-    return new Eff(_ => Promise.resolve(x));
+  public static of<T>(x: T): Task<T> {
+    return new Task(_ => Promise.resolve(x));
   }
 
   /**
@@ -52,8 +51,8 @@ export class Eff<F, T> {
    * @type T The type of the value.
    * @param f The function to lift.
    */
-  public static try<F, T>(f: () => T): Eff<F, T> {
-    return new Eff(_ => new Promise((resolve, reject) => {
+  public static try<T>(f: () => T): Task<T> {
+    return new Task(_ => new Promise((resolve, reject) => {
       setImmediate(() => {
         try { resolve(f()); }
         catch (err) { reject(err); }
@@ -67,8 +66,8 @@ export class Eff<F, T> {
    *
    * @param delay The delay in milliseconds
    */
-  public delay(delay: number): Eff<F, T> {
-    return new Eff<F, T>(ctx => new Promise((resolve, reject) => {
+  public delay(delay: number): Task<T> {
+    return new Task<T>(ctx => new Promise((resolve, reject) => {
       const timeoutObject = setTimeout(() => {
         this.run(ctx).then(resolve, reject);
       }, delay);
@@ -82,8 +81,8 @@ export class Eff<F, T> {
   /**
    * Returns a pure effect that immediately results in void.
    */
-  public static unit<F>(): Eff<F, void> {
-    return Eff.of(null);
+  public static unit(): Task<void> {
+    return Task.of(null);
   }
 
   /**
@@ -91,8 +90,8 @@ export class Eff<F, T> {
    *
    * @type T The type of the value.
    */
-  public static never<F, T>(): Eff<F, T> {
-    return new Eff(_ => new Promise(() => {}));
+  public static never<T>(): Task<T> {
+    return new Task(_ => new Promise(() => {}));
   }
 
   /**
@@ -100,8 +99,8 @@ export class Eff<F, T> {
    *
    * @type T The type of the value.
    */
-  public static cancel<F, T>(reason: Error): Eff<F, T> {
-    return new Eff(ctx => {
+  public static cancel<T>(reason: Error): Task<T> {
+    return new Task(ctx => {
       ctx.cancel(reason);
       return Promise.reject<T>(reason);
     });
@@ -112,8 +111,8 @@ export class Eff<F, T> {
    *
    * @param err The error to lift.
    */
-  public static throwError<T>(err: Error): Eff<{}, T> {
-    return new Eff(_ => Promise.reject<T>(err));
+  public static throwError<T>(err: Error): Task<T> {
+    return new Task(_ => Promise.reject<T>(err));
   }
 
   /**
@@ -121,8 +120,8 @@ export class Eff<F, T> {
    *
    * @param f The pure handler function.
    */
-  public catchError(f: (err: Error) => T): Eff<F, T> {
-    return new Eff((ctx: Context<F>) => this.run(ctx).catch(err => f(err)));
+  public catchError(f: (err: Error) => T): Task<T> {
+    return new Task((ctx: Context) => this.run(ctx).catch(err => f(err)));
   }
 
   /**
@@ -130,8 +129,8 @@ export class Eff<F, T> {
    *
    * @param f The effectful handler function.
    */
-  public recover<G>(f: (err: Error) => Eff<G, T>): Eff<F & G, T> {
-    return new Eff((ctx: Context<F & G>) => {
+  public recover(f: (err: Error) => Task<T>): Task<T> {
+    return new Task((ctx: Context) => {
       return ctx.withChild(cctx => this.run(cctx)).catch(err => {
         return ctx.withChild(cctx => f(err).run(cctx));
       });
@@ -143,8 +142,8 @@ export class Eff<F, T> {
    *
    * @param f The pure mapping function.
    */
-  public map<U>(f: (x: T) => U): Eff<F, U> {
-    return new Eff((ctx: Context<F>) => this.run(ctx).then(x => f(x)));
+  public map<U>(f: (x: T) => U): Task<U> {
+    return new Task((ctx: Context) => this.run(ctx).then(x => f(x)));
   }
 
   /**
@@ -152,8 +151,8 @@ export class Eff<F, T> {
    *
    * @param f The effectful mapping function.
    */
-  public andThen<G, U>(f: (x: T) => Eff<G, U>): Eff<F & G, U> {
-    return new Eff((ctx: Context<F & G>) => {
+  public andThen<G, U>(f: (x: T) => Task<U>): Task<U> {
+    return new Task((ctx: Context) => {
       return ctx.withChild(cctx => this.run(cctx)).then(err => {
         return ctx.withChild(cctx => f(err).run(cctx));
       });
@@ -165,11 +164,11 @@ export class Eff<F, T> {
    *
    * @param eff The second effectful computation.
    */
-  public parallel<G, U>(eff: Eff<G, U>): Eff<F & G, [T, U]> {
-    return new Eff((ctx: Context<F & G>) => {
+  public parallel<U>(task: Task<U>): Task<[T, U]> {
+    return new Task((ctx: Context) => {
       return Promise.all([
         ctx.withChild(cctx => this.run(cctx)),
-        ctx.withChild(cctx => eff.run(cctx))
+        ctx.withChild(cctx => task.run(cctx))
       ]);
     });
   }
@@ -180,10 +179,10 @@ export class Eff<F, T> {
    * @param arr The array to iterate over
    * @param f The iterator function
    */
-  static forEach<F, T, U>(arr: Array<T>, f: (x: T) => Eff<F, void>): Eff<F, void> {
-    function loop(i: number): Eff<F, void> {
+  static forEach<T, U>(arr: Array<T>, f: (x: T) => Task<void>): Task<void> {
+    function loop(i: number): Task<void> {
       if (i >= arr.length) {
-        return Eff.unit();
+        return Task.unit();
       }
       return f(arr[i]).andThen(() => {
         return loop(i + 1);
@@ -200,10 +199,10 @@ export class Eff<F, T> {
    * @param f The iterator function
    * @param init The initial state
    */
-  static fold<F, S, T, U>(arr: Array<T>, f: (s: S, x: T) => Eff<F, S>, init: S): Eff<F, S> {
-    function loop(state: S, i: number): Eff<F, S> {
+  static fold<S, T, U>(arr: Array<T>, f: (s: S, x: T) => Task<S>, init: S): Task<S> {
+    function loop(state: S, i: number): Task<S> {
       if (i >= arr.length) {
-        return Eff.of<F, S>(state);
+        return Task.of(state);
       }
       return f(state, arr[i]).andThen((newState) => {
         return loop(newState, i + 1);

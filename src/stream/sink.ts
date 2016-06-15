@@ -1,89 +1,89 @@
-import {Eff} from '../core/eff';
+import {Task} from '../core/task';
 
 import {IntoOutputStreamState, intoOutputStream} from './compat/output';
 
-export interface SinkInterface<Fx, Input, State, Result> {
-  onStart: () => Eff<Fx, State>;
-  onData: (s: State, i: Input) => Eff<Fx, State>;
-  onEnd: (s: State) => Eff<Fx, Result>;
+export interface SinkInterface<Input, State, Result> {
+  onStart: () => Task<State>;
+  onData: (s: State, i: Input) => Task<State>;
+  onEnd: (s: State) => Task<Result>;
 }
 
-export class Sink<Fx, Input, State, Result> implements SinkInterface<Fx, Input, State, Result> {
-  constructor(private _interface: SinkInterface<Fx, Input, State, Result>) {}
+export class Sink<Input, State, Result> implements SinkInterface<Input, State, Result> {
+  constructor(private _interface: SinkInterface<Input, State, Result>) {}
 
-  onStart(): Eff<Fx, State> {
+  onStart(): Task<State> {
     return this._interface.onStart();
   }
 
-  onData(s: State, i: Input): Eff<Fx, State> {
+  onData(s: State, i: Input): Task<State> {
     return this._interface.onData(s, i);
   }
 
-  onEnd(s: State): Eff<Fx, Result> {
+  onEnd(s: State): Task<Result> {
     return this._interface.onEnd(s);
   }
 
-  static unit<Fx, Input>(): Sink<Fx, Input, void, void> {
+  static unit<Input>(): Sink<Input, void, void> {
     return Sink.const(null);
   }
 
-  static const<Fx, Input, Result>(res: Result): Sink<Fx, Input, Result, Result> {
-    return new Sink<{}, Input, Result, Result>({
-      onStart: () => Eff.of(res),
-      onData: (s) => Eff.of(s),
-      onEnd: (s) => Eff.of(s)
+  static const<Input, Result>(res: Result): Sink<Input, Result, Result> {
+    return new Sink<Input, Result, Result>({
+      onStart: () => Task.of(res),
+      onData: (s) => Task.of(s),
+      onEnd: (s) => Task.of(s)
     });
   }
 
   static fold<Input, State>(
     init: State,
     accum: (state: State, input: Input) => State
-  ): Sink<{}, Input, State, State> {
+  ): Sink<Input, State, State> {
     return new Sink({
-      onStart: () => Eff.of(init),
-      onData: (state: State, input: Input) => Eff.of(accum(state, input)),
-      onEnd: (state: State) => Eff.of(state)
+      onStart: () => Task.of(init),
+      onData: (state: State, input: Input) => Task.of(accum(state, input)),
+      onEnd: (state: State) => Task.of(state)
     });
   }
 
-  static foldF<F, Input, State>(
+  static foldTask<F, Input, State>(
     init: State,
-    accum: (state: State, input: Input) => Eff<F, State>
-  ): Sink<{}, Input, State, State> {
+    accum: (state: State, input: Input) => Task<State>
+  ): Sink<Input, State, State> {
     return new Sink({
-      onStart: () => Eff.of(init),
+      onStart: () => Task.of(init),
       onData: (state: State, input: Input) => accum(state, input),
-      onEnd: (state: State) => Eff.of(state)
+      onEnd: (state: State) => Task.of(state)
     });
   }
 
-  map<NewResult>(f: (res: Result) => NewResult): Sink<Fx, Input, State, NewResult> {
-    return new Sink<Fx, Input, State, NewResult>({
+  map<NewResult>(f: (res: Result) => NewResult): Sink<Input, State, NewResult> {
+    return new Sink<Input, State, NewResult>({
       onStart: () => this.onStart(),
       onData: (s, i) => this.onData(s, i),
       onEnd: (s) => this.onEnd(s).map(f)
     });
   }
 
-  effectfulMap<Fx2, NewResult>(f: (res: Result) => Eff<Fx2, NewResult>): Sink<Fx & Fx2, Input, State, NewResult> {
-    return new Sink<Fx & Fx2, Input, State, NewResult>({
+  mapWithTask<NewResult>(f: (res: Result) => Task<NewResult>): Sink<Input, State, NewResult> {
+    return new Sink<Input, State, NewResult>({
       onStart: () => this.onStart(),
       onData: (s, i) => this.onData(s, i),
       onEnd: (s) => this.onEnd(s).andThen(f)
     });
   }
 
-  parallel<Fx2, OtherState, OtherResult>(
-    other: Sink<Fx2, Input, OtherState, OtherResult>
-  ): Sink<Fx & Fx2, Input, [State, OtherState], [Result, OtherResult]> {
-    return new Sink<Fx & Fx2, Input, [State, OtherState], [Result, OtherResult]>({
+  parallel<OtherState, OtherResult>(
+    other: Sink<Input, OtherState, OtherResult>
+  ): Sink<Input, [State, OtherState], [Result, OtherResult]> {
+    return new Sink<Input, [State, OtherState], [Result, OtherResult]>({
       onStart: () => this.onStart().parallel(other.onStart()),
       onData: (s, i) => this.onData(s[0], i).parallel(other.onData(s[1], i)),
       onEnd: (s) => this.onEnd(s[0]).parallel(other.onEnd(s[1]))
     });
   }
 
-  static intoOutputStream<F>(output: () => NodeJS.WritableStream): Sink<F, Buffer, IntoOutputStreamState, void> {
+  static intoOutputStream(output: () => NodeJS.WritableStream): Sink<Buffer, IntoOutputStreamState, void> {
     return intoOutputStream(output);
   }
 }

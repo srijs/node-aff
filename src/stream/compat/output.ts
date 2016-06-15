@@ -1,4 +1,4 @@
-import {Eff} from '../../core/eff';
+import {Task} from '../../core/task';
 
 import {Sink} from '../sink';
 
@@ -45,15 +45,15 @@ export class IntoOutputStreamState {
   }
 }
 
-export function intoOutputStream<F>(output: () => NodeJS.WritableStream): Sink<F, Buffer, IntoOutputStreamState, void> {
-  return new Sink<F, Buffer, IntoOutputStreamState, void>({
-    onStart: () => new Eff(ctx => {
+export function intoOutputStream(output: () => NodeJS.WritableStream): Sink<Buffer, IntoOutputStreamState, void> {
+  return new Sink<Buffer, IntoOutputStreamState, void>({
+    onStart: () => new Task(ctx => {
       return Promise.resolve(new IntoOutputStreamState(output()));
     }),
-    onData: (state, buf) => new Eff(ctx => {
+    onData: (state, buf) => new Task(ctx => {
       return state.write(buf);
     }),
-    onEnd: (state) => new Eff(ctx => {
+    onEnd: (state) => new Task(ctx => {
       return state.end();
     })
   });

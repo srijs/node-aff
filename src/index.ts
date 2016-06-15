@@ -1,10 +1,10 @@
 'use strict';
 
 import {Context} from './core/ctx';
-import {Eff} from './core/eff';
+import {Task} from './core/task';
 import {SinkInterface, Sink, Source} from './stream';
 
 export {
-  Eff, Context,
+  Task, Context,
   SinkInterface, Sink, Source
 }

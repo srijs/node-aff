@@ -3,7 +3,5 @@ pages:
 - Home: 'index.md'
 - User Guide:
     - 'Intro': 'intro.md'
-    - 'Effects': 'effects.md'
+    - 'Tasks': 'tasks.md'
     - 'Streams': 'streams.md'
-- About:
-    - 'Design': 'design.md'

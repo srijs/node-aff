@@ -1,10 +1,9 @@
-import * as mocha from 'mocha';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 
 import * as stream from 'stream';
 
-import {Eff} from '../core/eff';
+import {Task} from '../core/task';
 import {Source} from './source';
 import {Sink} from './sink';
 
@@ -19,14 +18,14 @@ describe('Stream', () => {
       it('returns null with an empty input', () => {
         const sink = Sink.unit();
         const source = Source.empty();
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(null);
       });
 
       it('returns null with a non-empty input', () => {
         const sink = Sink.unit();
         const source = Source.fromArray([1, 2, 3]);
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(null);
       });
 
@@ -37,14 +36,14 @@ describe('Stream', () => {
       it('returns the result with an empty input', () => {
         const sink = Sink.const(42);
         const source = Source.empty();
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(42);
       });
 
       it('returns the result with a non-empty input', () => {
         const sink = Sink.const(42);
         const source = Source.fromArray([1, 2, 3]);
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(42);
       });
 
@@ -55,32 +54,32 @@ describe('Stream', () => {
       it('transforms the result when run with an empty input', () => {
         const sink = Sink.const(42).map(x => x + 1);
         const source = Source.empty();
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(43);
       });
 
       it('transforms the result when run with a non-empty input', () => {
         const sink = Sink.const(42).map(x => x + 1);
         const source = Source.fromArray([1, 2, 3]);
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(43);
       });
 
     });
 
-    describe('effectfulMap', () => {
+    describe('mapWithTask', () => {
 
       it('transforms the result when run with an empty input', () => {
-        const sink = Sink.const(42).effectfulMap(x => Eff.of(x + 1));
+        const sink = Sink.const(42).mapWithTask(x => Task.of(x + 1));
         const source = Source.empty();
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(43);
       });
 
       it('transforms the result when run with a non-empty input', () => {
-        const sink = Sink.const(42).effectfulMap(x => Eff.of(x + 1));
+        const sink = Sink.const(42).mapWithTask(x => Task.of(x + 1));
         const source = Source.fromArray([1, 2, 3]);
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.equal(43);
       });
 
@@ -91,14 +90,14 @@ describe('Stream', () => {
       it('returns both results when run with an empty input', () => {
         const sink = Sink.const(42).parallel(Sink.const('foo'));
         const source = Source.empty();
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.deep.equal([42, 'foo']);
       });
 
       it('returns both results when run with a non-empty input', () => {
         const sink = Sink.const(42).parallel(Sink.const('foo'));
         const source = Source.fromArray([1, 2, 3]);
-        const promise = source.pipe(sink).exec({});
+        const promise = source.pipe(sink).exec();
         return chai.expect(promise).to.eventually.deep.equal([42, 'foo']);
       });
 
@@ -109,8 +108,8 @@ describe('Stream', () => {
       it('writes no data when the source is empty', () => {
         const str = new stream.PassThrough({highWaterMark: 1024});
         const sink = Sink.intoOutputStream(() => str);
-        const promiseSink = Source.empty().pipe(sink).exec({});
-        const promiseSrc = Source.fromInputStream(() => str).toArray().exec({});
+        const promiseSink = Source.empty().pipe(sink).exec();
+        const promiseSrc = Source.fromInputStream(() => str).toArray().exec();
         return chai.expect(promiseSink).to.eventually.equal(null).then(() => {
           return chai.expect(promiseSrc).to.eventually.deep.equal([]);
         });
@@ -121,8 +120,8 @@ describe('Stream', () => {
         const sink = Sink.intoOutputStream(() => str);
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
-        const promiseSink = Source.fromArray([data1, data2]).pipe(sink).exec({});
-        const promiseSrc = Source.fromInputStream(() => str).toArray().exec({});
+        const promiseSink = Source.fromArray([data1, data2]).pipe(sink).exec();
+        const promiseSrc = Source.fromInputStream(() => str).toArray().exec();
         return chai.expect(promiseSink).to.eventually.equal(null).then(() => {
           return chai.expect(promiseSrc).to.eventually.deep.equal([data1, data2]);
         });
@@ -133,8 +132,8 @@ describe('Stream', () => {
         const sink = Sink.intoOutputStream(() => str);
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
-        const promiseSink = Source.fromArray([data1, data2]).pipe(sink).exec({});
-        const promiseSrc = Source.fromInputStream(() => str).toArray().exec({});
+        const promiseSink = Source.fromArray([data1, data2]).pipe(sink).exec();
+        const promiseSrc = Source.fromInputStream(() => str).toArray().exec();
         return chai.expect(promiseSink).to.eventually.equal(null).then(() => {
           return chai.expect(promiseSrc).to.eventually.deep.equal([data1, data2]);
         });
@@ -144,7 +143,7 @@ describe('Stream', () => {
         const err = new Error('yep this is an error');
         const str = new stream.PassThrough({highWaterMark: 1024});
         const sink = Sink.intoOutputStream(() => str);
-        const emitErr = new Eff(ctx => Promise.resolve(str.emit('error', err)));
+        const emitErr = new Task(ctx => Promise.resolve(str.emit('error', err)));
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
         const promiseSink = sink.onStart().andThen(state => {
@@ -153,7 +152,7 @@ describe('Stream', () => {
           return sink.onData(state, data2).parallel(emitErr);
         }).andThen(states => {
           return sink.onEnd(states[0]);
-        }).exec({});
+        }).exec();
         return chai.expect(promiseSink).to.eventually.be.rejectedWith(err);
       });
 
@@ -161,7 +160,7 @@ describe('Stream', () => {
         const err = new Error('yep this is an error');
         const str = new stream.PassThrough({highWaterMark: 2048});
         const sink = Sink.intoOutputStream(() => str);
-        const emitErr = new Eff(ctx => Promise.resolve(str.emit('error', err)));
+        const emitErr = new Task(ctx => Promise.resolve(str.emit('error', err)));
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
         const promiseSink = sink.onStart().andThen(state => {
@@ -170,7 +169,7 @@ describe('Stream', () => {
           return sink.onData(state, data2);
         }).andThen(state => {
           return sink.onEnd(state).parallel(emitErr);
-        }).exec({});
+        }).exec();
         return chai.expect(promiseSink).to.eventually.be.rejectedWith(err);
       });
 
@@ -178,7 +177,7 @@ describe('Stream', () => {
         const err = new Error('yep this is an error');
         const str = new stream.PassThrough({highWaterMark: 1024});
         const sink = Sink.intoOutputStream(() => str);
-        const emitErr = new Eff(ctx => Promise.resolve(str.emit('error', err)));
+        const emitErr = new Task(ctx => Promise.resolve(str.emit('error', err)));
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
         const promiseSink = sink.onStart().andThen(state => {
@@ -187,7 +186,7 @@ describe('Stream', () => {
           return emitErr.andThen(() => sink.onData(state, data2));
         }).andThen(state => {
           return sink.onEnd(state);
-        }).exec({});
+        }).exec();
         return chai.expect(promiseSink).to.eventually.be.rejectedWith(err);
       });
 
@@ -195,7 +194,7 @@ describe('Stream', () => {
         const err = new Error('yep this is an error');
         const str = new stream.PassThrough({highWaterMark: 2048});
         const sink = Sink.intoOutputStream(() => str);
-        const emitErr = new Eff(ctx => Promise.resolve(str.emit('error', err)));
+        const emitErr = new Task(ctx => Promise.resolve(str.emit('error', err)));
         const data1 = new Buffer(1024);
         const data2 = new Buffer(1024);
         const promiseSink = sink.onStart().andThen(state => {
@@ -204,7 +203,7 @@ describe('Stream', () => {
           return sink.onData(state, data2);
         }).andThen(state => {
           return emitErr.andThen(() => sink.onEnd(state));
-        }).exec({});
+        }).exec();
         return chai.expect(promiseSink).to.eventually.be.rejectedWith(err);
       });
 

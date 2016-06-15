@@ -16,7 +16,7 @@ So there is not only great merit in avoiding side-effects for the most part. Bei
 
 # Manageable Effects
 
-The `aff` effect system allows you to easily compose functions that have side-effects, while being completely in control over which effects those are and how they are executed. It mainly concerns itself with handling "native" effects, i.e. effects which are provided by the runtime system, and which cannot be emulated by pure functions.
+The `aff` effect system allows you to easily compose functions that have side-effects, while being completely in control over how they are executed. It mainly concerns itself with handling "native" effects, i.e. effects which are provided by the runtime system, and which cannot be emulated by pure functions.
 
 Some examples of native, asynchronous effects are:
 
