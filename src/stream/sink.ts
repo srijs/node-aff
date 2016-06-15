@@ -46,7 +46,7 @@ export class Sink<Input, State, Result> implements SinkInterface<Input, State, R
     });
   }
 
-  static foldTask<F, Input, State>(
+  static foldTask<Input, State>(
     init: State,
     accum: (state: State, input: Input) => Task<State>
   ): Sink<Input, State, State> {
