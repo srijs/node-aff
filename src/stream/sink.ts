@@ -46,6 +46,17 @@ export class Sink<Fx, Input, State, Result> implements SinkInterface<Fx, Input, 
     });
   }
 
+  static foldF<F, Input, State>(
+    init: State,
+    accum: (state: State, input: Input) => Eff<F, State>
+  ): Sink<{}, Input, State, State> {
+    return new Sink({
+      onStart: () => Eff.of(init),
+      onData: (state: State, input: Input) => accum(state, input),
+      onEnd: (state: State) => Eff.of(state)
+    });
+  }
+
   map<NewResult>(f: (res: Result) => NewResult): Sink<Fx, Input, State, NewResult> {
     return new Sink<Fx, Input, State, NewResult>({
       onStart: () => this.onStart(),
