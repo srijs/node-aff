@@ -1,6 +1,7 @@
 'use strict';
 
 import {Context} from './ctx';
+import {Backoff} from '../utils/backoff';
 
 /**
  * Represents an asynchronous, effectful computation.
@@ -76,6 +77,19 @@ export class Task<T> {
         reject(reason);
       });
     }));
+  }
+
+  retry(backoff: Backoff, maxRetries: number): Task<T> {
+    return this._retry(backoff, maxRetries, 0);
+  }
+
+  private _retry(backoff: Backoff, maxRetries: number, n: number): Task<T> {
+    return this.delay(backoff.nth(n)).recover(err => {
+      if (n < maxRetries) {
+        return this._retry(backoff, maxRetries, n + 1);
+      }
+      throw err;
+    });
   }
 
   /**
