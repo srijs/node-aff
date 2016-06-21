@@ -79,6 +79,10 @@ export class Task<T> {
     }));
   }
 
+  /**
+   * Retries the task on failure up to a number of times,
+   * with the given backoff strategy.
+   */
   retry(backoff: Backoff, maxRetries: number): Task<T> {
     return this._retry(backoff, maxRetries, 0);
   }
