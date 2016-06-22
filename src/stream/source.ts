@@ -107,8 +107,15 @@ export class Source<Output> {
     });
   }
 
+  fold<State>(
+    init: State,
+    accum: (state: State, input: Output) => State
+  ): Task<State> {
+    return this.pipe(Sink.fold(init, accum));
+  }
+
   toArray(): Task<Array<Output>> {
-    return this.pipe(Sink.fold([], (arr, outp) => arr.concat([outp])));
+    return this.fold([], (arr, outp) => arr.concat([outp]));
   }
 
   static fromArray<Output>(arr: Array<Output>): Source<Output> {
