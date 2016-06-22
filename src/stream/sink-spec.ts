@@ -67,24 +67,6 @@ describe('Stream', () => {
 
     });
 
-    describe('mapWithTask', () => {
-
-      it('transforms the result when run with an empty input', () => {
-        const sink = Sink.const(42).mapWithTask(x => Task.of(x + 1));
-        const source = Source.empty();
-        const promise = source.pipe(sink).exec();
-        return chai.expect(promise).to.eventually.equal(43);
-      });
-
-      it('transforms the result when run with a non-empty input', () => {
-        const sink = Sink.const(42).mapWithTask(x => Task.of(x + 1));
-        const source = Source.fromArray([1, 2, 3]);
-        const promise = source.pipe(sink).exec();
-        return chai.expect(promise).to.eventually.equal(43);
-      });
-
-    });
-
     describe('parallel', () => {
 
       it('returns both results when run with an empty input', () => {

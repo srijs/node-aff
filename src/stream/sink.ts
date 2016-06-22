@@ -55,11 +55,7 @@ export class Sink<Input, State, Result> implements SinkInterface<Input, State, R
   }
 
   map<NewResult>(f: (res: Result) => NewResult): Sink<Input, State, NewResult> {
-    return new Sink<Input, State, NewResult>({
-      onStart: () => this.onStart(),
-      onData: (s, i) => this.onData(s, i),
-      onEnd: (s) => this.onEnd(s).map(f)
-    });
+    return this.mapWithTask(res => Task.of(f(res)));
   }
 
   mapWithTask<NewResult>(f: (res: Result) => Task<NewResult>): Sink<Input, State, NewResult> {
