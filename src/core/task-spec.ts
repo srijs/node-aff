@@ -205,6 +205,18 @@ describe('Task', () => {
 
   });
 
+  describe('never', () => {
+
+    it('can be cancelled', () => {
+      const err = new Error('yep this is an error');
+      const ctx = new Context();
+      const promise = Task.never().run(ctx);
+      setImmediate(() => ctx.cancel(err));
+      return chai.expect(promise).to.eventually.be.rejectedWith(err);
+    });
+
+  });
+
   describe('forEach', () => {
 
     it('returns an empty task for an empty list', async () => {

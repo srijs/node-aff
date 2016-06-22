@@ -104,12 +104,14 @@ export class Task<T> {
   }
 
   /**
-   * Returns a pure effect that never returns.
+   * Returns a pure effect that never returns, except when cancelled.
    *
    * @type T The type of the value.
    */
   public static never<T>(): Task<T> {
-    return new Task(_ => new Promise(() => {}));
+    return new Task(ctx => new Promise((resolve, reject) => {
+      ctx.onCancel(reject);
+    }));
   }
 
   /**
