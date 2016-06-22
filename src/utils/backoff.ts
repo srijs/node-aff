@@ -5,12 +5,7 @@ export interface Backoff {
   nth(n: number): number;
 }
 
-/**
- * Implements a jittered backoff strategy, which is described
- * in detail (called "Full Jitter") in this great article:
- * https://www.awsarchitectureblog.com/2015/03/backoff.html
- */
-export class FullJitter implements Backoff {
+class FullJitter implements Backoff {
   constructor(private _base: number, private _cap: number) {}
 
   private _exp(n: number): number {
@@ -20,5 +15,16 @@ export class FullJitter implements Backoff {
   nth(n: number): number {
     const v = this._exp(n);
     return Math.random() * v;
+  }
+}
+
+export module Backoff {
+  /**
+   * A jittered backoff strategy, which is described
+   * in detail in this great article:
+   * https://www.awsarchitectureblog.com/2015/03/backoff.html
+   */
+  export function fullJitter(base: number, cap: number): Backoff {
+    return new FullJitter(base, cap);
   }
 }
