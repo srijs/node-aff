@@ -133,7 +133,16 @@ export class Task<T> {
    * @param err The error to lift.
    */
   public static throwError<T>(err: Error): Task<T> {
-    return new Task(_ => Promise.reject<T>(err));
+    return Task.fail(err);
+  }
+
+  /**
+   * Lifts an error into a pure task, causing it to fail.
+   *
+   * @param err The error to lift.
+   */
+  public static fail(err: Error): Task<any> {
+    return new Task(_ => Promise.reject(err));
   }
 
   /**
