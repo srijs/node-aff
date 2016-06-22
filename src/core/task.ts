@@ -195,6 +195,33 @@ export class Task<T> {
   }
 
   /**
+   * Executes all the tasks in the array in sequence.
+   *
+   * @param tasks The tasks to execute.
+   */
+  static sequence<T>(tasks: Array<Task<T>>): Task<Array<T>> {
+    return Task.traverse(tasks, task => task);
+  }
+
+  /**
+   * Executes the given action in sequence for every element in the array.
+   *
+   * @param arr The array to traverse.
+   * @param f The action to execute.
+   */
+  static traverse<T, U>(arr: Array<T>, f: (t: T) => Task<U>): Task<Array<U>> {
+    function loop(i: number, arr2: Array<U>): Task<Array<U>> {
+      if (i >= arr.length) {
+        return Task.of(arr2);
+      }
+      return f(arr[i]).andThen(u => {
+        return loop(i + 1, arr2.concat([u]));
+      });
+    };
+    return loop(0, []);
+  }
+
+  /**
    * Executes the given function once for every item in the array, in order.
    *
    * @param arr The array to iterate over
