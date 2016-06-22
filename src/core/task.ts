@@ -2,6 +2,7 @@
 
 import {Context} from './ctx';
 import {Backoff} from '../utils/backoff';
+import {Closable, Resource} from '../utils/resource';
 
 /**
  * Represents an asynchronous, effectful computation.
@@ -231,4 +232,7 @@ export class Task<T> {
     return loop(init, 0);
   }
 
+  static using<T extends Closable, U>(res: Resource<T>, action: (t: T) => Task<U>): Task<U> {
+    return res.use(action);
+  }
 }
