@@ -35,7 +35,7 @@ export class Task<T> {
   }
 
   /**
-   * Lifts a value into a pure effect which immediately returns.
+   * Lifts a value into a pure task which immediately returns.
    *
    * @type T The type of the value.
    * @param x The value to lift.
@@ -45,10 +45,10 @@ export class Task<T> {
   }
 
   /**
-   * Lifts a nullary function into a pure effect.
-   * The function will be executed in another tick after the effect
+   * Lifts a nullary function into a pure task.
+   * The function will be executed in another tick after the task
    * has started to run. If it throws an exception, it is caught
-   * and expressed as a failure of the effect.
+   * and expressed as a failure of the task.
    *
    * @type T The type of the value.
    * @param f The function to lift.
@@ -63,7 +63,7 @@ export class Task<T> {
   }
 
   /**
-   * Delays the execution of the effect by the
+   * Delays the execution of the task by the
    * given number of milliseconds.
    *
    * @param delay The delay in milliseconds
@@ -98,14 +98,14 @@ export class Task<T> {
   }
 
   /**
-   * Returns a pure effect that immediately results in void.
+   * Returns a pure task that immediately results in void.
    */
   public static unit(): Task<void> {
     return Task.of(null);
   }
 
   /**
-   * Returns a pure effect that never returns, except when cancelled.
+   * Returns a pure task that never returns, except when cancelled.
    *
    * @type T The type of the value.
    */
@@ -116,7 +116,7 @@ export class Task<T> {
   }
 
   /**
-   * Returns an effect that when run, cancels the computation.
+   * Returns a task that when run, cancels the computation.
    *
    * @type T The type of the value.
    */
@@ -128,7 +128,7 @@ export class Task<T> {
   }
 
   /**
-   * Lifts an error into a pure effect, causing it to fail.
+   * Lifts an error into a pure task, causing it to fail.
    *
    * @param err The error to lift.
    */
