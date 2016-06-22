@@ -3,6 +3,7 @@ pages:
 - Home: 'index.md'
 - User Guide:
     - 'Intro': 'intro.md'
-    - 'Tasks': 'tasks.md'
+    - 'Tasks':
+      - 'Intro': 'tasks/intro.md'
       - 'Combining Tasks': 'tasks/combining.md'
     - 'Streams': 'streams.md'
