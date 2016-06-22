@@ -39,11 +39,8 @@ export class Sink<Input, State, Result> implements SinkInterface<Input, State, R
     init: State,
     accum: (state: State, input: Input) => State
   ): Sink<Input, State, State> {
-    return new Sink({
-      onStart: () => Task.of(init),
-      onData: (state: State, input: Input) => Task.of(accum(state, input)),
-      onEnd: (state: State) => Task.of(state)
-    });
+    return Sink.foldTask<Input, State>(init, (state, input) =>
+      Task.of(accum(state, input)));
   }
 
   static foldTask<Input, State>(
