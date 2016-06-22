@@ -4,4 +4,5 @@ pages:
 - User Guide:
     - 'Intro': 'intro.md'
     - 'Tasks': 'tasks.md'
+      - 'Combining Tasks': 'tasks/combining.md'
     - 'Streams': 'streams.md'
