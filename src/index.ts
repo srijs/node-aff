@@ -1,7 +1,14 @@
 'use strict';
 
-import {Run} from './core/run';
-import {Op, Eff} from './core/eff';
-import {EffUtil} from './core/effutil';
+import {Context} from './core/ctx';
+import {Task} from './core/task';
+import {SinkInterface, Sink, Source} from './stream';
+import {Backoff} from './utils/backoff';
+import {Closable, Resource} from './utils/resource';
 
-export {Op, Eff, Run, EffUtil}
+export {
+  Task, Context,
+  SinkInterface, Sink, Source,
+  Backoff,
+  Closable, Resource
+}

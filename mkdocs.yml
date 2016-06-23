@@ -1,0 +1,9 @@
+site_name: 'node-aff Documentation'
+pages:
+- Home: 'index.md'
+- User Guide:
+    - 'Intro': 'intro.md'
+    - 'Tasks':
+      - 'Intro': 'tasks/intro.md'
+      - 'Combining Tasks': 'tasks/combining.md'
+    - 'Streams': 'streams.md'
