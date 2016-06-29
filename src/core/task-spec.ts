@@ -180,6 +180,23 @@ describe('Task', () => {
 
   });
 
+  describe('func', () => {
+
+    it('returns a task that succeeds if it returns', () => {
+      const f = Task.func((x: number) => x + 1);
+      return chai.expect(f(42).exec()).to.eventually.equal(43);
+    });
+
+    it('returns a task that fails if it throws', () => {
+      const err = new Error('yep this is an error');
+      const f = Task.func((_) => {
+        throw err;
+      });
+      return chai.expect(f(null).exec()).to.eventually.be.rejectedWith(err);
+    });
+
+  });
+
   describe('delay', () => {
 
     it('succeeds when the task succeeds', () => {

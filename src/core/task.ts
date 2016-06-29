@@ -63,6 +63,25 @@ export class Task<T> {
   }
 
   /**
+   * Lifts a unary function into a pure task.
+   * The function will be executed in another tick after the task
+   * has started to run. If it throws an exception, it is caught
+   * and expressed as a failure of the task.
+   *
+   * @type T The argument type of the function.
+   * @type U The return type of the function.
+   * @param f The function to lift.
+   */
+  public static func<T, U>(f: (t: T) => U): (t: T) => Task<U> {
+    return (t: T) => new Task(_ => new Promise((resolve, reject) => {
+      setImmediate(() => {
+        try { resolve(f(t)); }
+        catch (err) { reject(err); }
+      });
+    }));
+  }
+
+  /**
    * Delays the execution of the task by the
    * given number of milliseconds.
    *
