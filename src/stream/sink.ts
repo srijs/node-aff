@@ -76,6 +76,10 @@ export class Sink<Input, State, Result> implements SinkInterface<Input, State, R
     });
   }
 
+  static forEach<Input>(action: (input: Input) => Task<void>): Sink<Input, void, void> {
+    return Sink.foldTask<Input, void>(null, (_, input) => action(input));
+  }
+
   static intoOutputStream(output: () => NodeJS.WritableStream): Sink<Buffer, IntoOutputStreamState, void> {
     return intoOutputStream(output);
   }

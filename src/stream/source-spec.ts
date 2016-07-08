@@ -128,21 +128,19 @@ describe('Stream', () => {
       it('does nothing for an empty source', async () => {
         let counter = 0;
         const src = Source.empty();
-        await src.forEach(() => {
+        await src.forEach(() => Task.try(() => {
           counter++;
-          return Task.unit();
-        }).exec();
-        chai.expect(counter).to.equal(0);
+        })).exec();
+        chai.expect(counter).to.be.equal(0);
       });
 
       it('replaces each output with the result of the function', async () => {
         let counter = 0;
         const src = Source.fromArray([1,2,3]);
-        await src.forEach(() => {
+        await src.forEach(() => Task.try(() => {
           counter++;
-          return Task.unit();
-        }).exec();
-        chai.expect(counter).to.equal(3);
+        })).exec();
+        chai.expect(counter).to.be.equal(3);
       });
 
     });
