@@ -237,7 +237,7 @@ export class Task<T> {
    * @param tasks The tasks to execute.
    */
   static parallel<T>(tasks: Array<Task<T>>): Task<Array<T>> {
-    return new Task(ctx => Promise.all(tasks.map(task => task.run(ctx))));
+    return new Task(ctx => Promise.all<T>(tasks.map(task => task.run(ctx))));
   }
 
   /**
