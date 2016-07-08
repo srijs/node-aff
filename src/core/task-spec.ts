@@ -269,4 +269,17 @@ describe('Task', () => {
 
   });
 
+  describe('parallel', () => {
+
+    it('returns an empty array from an empty array', async () => {
+      await chai.expect(Task.parallel([]).exec()).to.eventually.be.deep.equal([]);
+    });
+
+    it('executes all the tasks in the array in sequence', async () => {
+      const tasks = [Task.of(1), Task.of(2), Task.of(3)];
+      await chai.expect(Task.parallel(tasks).exec()).to.eventually.be.deep.equal([1,2,3]);
+    });
+
+  });
+
 });

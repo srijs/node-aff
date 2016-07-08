@@ -232,6 +232,15 @@ export class Task<T> {
   }
 
   /**
+   * Executes all the tasks in the array in parallel.
+   *
+   * @param tasks The tasks to execute.
+   */
+  static parallel<T>(tasks: Array<Task<T>>): Task<Array<T>> {
+    return new Task(ctx => Promise.all(tasks.map(task => task.run(ctx))));
+  }
+
+  /**
    * Executes the given action in sequence for every element in the array.
    *
    * @param arr The array to traverse.
