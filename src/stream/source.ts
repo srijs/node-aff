@@ -114,6 +114,10 @@ export class Source<Output> {
     return this.pipe(Sink.fold(init, accum));
   }
 
+  forEach(action: (input: Output) => Task<void>): Task<void> {
+    return this.fold(null, (_, input) => action(input));
+  }
+
   toArray(): Task<Array<Output>> {
     return this.fold([], (arr, outp) => arr.concat([outp]));
   }

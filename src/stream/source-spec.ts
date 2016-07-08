@@ -123,6 +123,30 @@ describe('Stream', () => {
 
     });
 
+    describe('forEach', () => {
+
+      it('does nothing for an empty source', async () => {
+        let counter = 0;
+        const src = Source.empty();
+        await src.forEach(() => {
+          counter++;
+          return Task.unit();
+        }).exec();
+        chai.expect(counter).to.equal(0);
+      });
+
+      it('replaces each output with the result of the function', async () => {
+        let counter = 0;
+        const src = Source.fromArray([1,2,3]);
+        await src.forEach(() => {
+          counter++;
+          return Task.unit();
+        }).exec();
+        chai.expect(counter).to.equal(3);
+      });
+
+    });
+
     describe('fromInputStream', () => {
 
       it('produces an empty source from an empty stream', () => {
