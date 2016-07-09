@@ -10,10 +10,22 @@ export class Queue<T> {
 
   constructor(private _opts: Queue.Options) {}
 
+  get closed(): boolean {
+    return this._closed;
+  }
+
+  get waitingConsumers(): number {
+    return this._waitingConsumers.length;
+  }
+
+  get waitingProducers(): number {
+    return this._waitingProducers.length;
+  }
+
   close(): Task<void> {
     return Task.try(() => {
       this._closed = true;
-      while (this._waitingConsumers.length > 0) {
+      while (this.waitingConsumers > 0) {
         this._waitingConsumers.shift().reject(new Queue.ClosedError());
       }
     });
@@ -21,10 +33,10 @@ export class Queue<T> {
 
   enqueue(t: T): Task<void> {
     return new Task(ctx => new Promise<void>((resolve, reject) => {
-      if (this._closed) {
+      if (this.closed) {
         return reject(new Queue.ClosedError());
       }
-      if (this._waitingConsumers.length > 0) {
+      if (this.waitingConsumers > 0) {
         this._waitingConsumers.shift().resolve(t);
         return resolve(null);
       }
@@ -57,10 +69,10 @@ export class Queue<T> {
       if (this._queue.length > 0) {
         return resolve(this._queue.shift());
       }
-      if (this._waitingProducers.length > 0) {
+      if (this.waitingProducers > 0) {
         return resolve(this._waitingProducers.shift()());
       }
-      if (this._closed) {
+      if (this.closed) {
         return reject(new Queue.ClosedError());
       }
       const consumer = {resolve, reject};
