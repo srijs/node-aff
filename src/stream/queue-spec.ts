@@ -335,6 +335,42 @@ describe('Queue', () => {
       return chai.expect(promise).to.eventually.be.rejectedWith(err);
     });
 
+    it('fails when called after queue is closed', async () => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.enqueue(1).exec();
+      await q.enqueue(2).exec();
+
+      chai.expect(q.demand).to.be.equal(0);
+
+      q.close();
+
+      const promise = q.waitForDemand().exec();
+
+      return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
+    });
+
+    it('fails when queue is closed after it was called', async () => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.enqueue(1).exec();
+      await q.enqueue(2).exec();
+
+      chai.expect(q.demand).to.be.equal(0);
+
+      const promise = q.waitForDemand().exec();
+
+      await Task.try(() => q.close()).delay(30).exec();
+
+      return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
+    });
+
   });
 
 });
