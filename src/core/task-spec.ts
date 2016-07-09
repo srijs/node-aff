@@ -95,6 +95,16 @@ describe('Bind Operation', function () {
 
 describe('Task', () => {
 
+  describe('map', () => {
+
+    it('retains the error in case of failure', () => {
+      const reason = new Error('some kind of error');
+      const promise = Task.fail(reason).map(() => 42).exec();
+      return chai.expect(promise).to.be.rejectedWith(reason);
+    });
+
+  });
+
   describe('throwError', () => {
 
     it('returns a task that fails', () => {
