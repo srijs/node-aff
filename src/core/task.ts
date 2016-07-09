@@ -227,6 +227,20 @@ export class Task<T> {
   }
 
   /**
+   * Repeats the given task a number of times.
+   *
+   * Can be combined with Task#sequence or Task#parallel
+   * to choose an evaluation strategy.
+   */
+  repeat(times: number): Array<Task<T>> {
+    const tasks = new Array<Task<T>>();
+    for (let i = 0; i < times; i++) {
+      tasks.push(this);
+    }
+    return tasks;
+  }
+
+  /**
    * Combines the computation with another in parallel.
    *
    * @param eff The second effectful computation.

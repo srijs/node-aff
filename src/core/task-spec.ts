@@ -244,6 +244,16 @@ describe('Task', () => {
 
   });
 
+  describe('repeat', () => {
+
+    it('returns an array of tasks', async () => {
+      let counter = 0;
+      await Task.sequence(Task.try(() => counter++).repeat(5)).exec();
+      chai.expect(counter).to.eql(5);
+    });
+
+  });
+
   describe('forEach', () => {
 
     it('returns an empty task for an empty list', async () => {
