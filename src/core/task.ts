@@ -168,12 +168,12 @@ export class Task<T> {
    * Branches based on the outcome of the Task.
    */
   public when<U>(
-    branches: {success: (t: T) => Task<U>, error: (err: Error) => Task<U>}
+    branches: {ok: (t: T) => Task<U>, err: (err: Error) => Task<U>}
   ): Task<U> {
     return new Task((ctx: Context) => {
       return ctx.withChild(cctx => this.run(cctx)).then(
-        res => ctx.withChild(cctx => branches.success(res).run(cctx)),
-        err => ctx.withChild(cctx => branches.error(err).run(cctx))
+        res => ctx.withChild(cctx => branches.ok(res).run(cctx)),
+        err => ctx.withChild(cctx => branches.err(err).run(cctx))
       );
     });
   }
@@ -184,7 +184,10 @@ export class Task<T> {
    * @param f The pure handler function.
    */
   public catchError(f: (err: Error) => T): Task<T> {
-    return new Task((ctx: Context) => this.run(ctx).catch(err => f(err)));
+    return this.when({
+      ok: t => Task.of(t),
+      err: err => Task.of(f(err))
+    });
   }
 
   /**
@@ -193,10 +196,9 @@ export class Task<T> {
    * @param f The effectful handler function.
    */
   public recover(f: (err: Error) => Task<T>): Task<T> {
-    return new Task((ctx: Context) => {
-      return ctx.withChild(cctx => this.run(cctx)).catch(err => {
-        return ctx.withChild(cctx => f(err).run(cctx));
-      });
+    return this.when({
+      ok: t => Task.of(t),
+      err: err => f(err)
     });
   }
 
@@ -206,7 +208,10 @@ export class Task<T> {
    * @param f The pure mapping function.
    */
   public map<U>(f: (x: T) => U): Task<U> {
-    return new Task((ctx: Context) => this.run(ctx).then(x => f(x)));
+    return this.when({
+      ok: t => Task.of(f(t)),
+      err: err => Task.fail(err)
+    });
   }
 
   /**
@@ -215,10 +220,9 @@ export class Task<T> {
    * @param f The effectful mapping function.
    */
   public andThen<G, U>(f: (x: T) => Task<U>): Task<U> {
-    return new Task((ctx: Context) => {
-      return ctx.withChild(cctx => this.run(cctx)).then(err => {
-        return ctx.withChild(cctx => f(err).run(cctx));
-      });
+    return this.when({
+      ok: t => f(t),
+      err: err => Task.fail(err)
     });
   }
 
