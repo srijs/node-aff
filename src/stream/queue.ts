@@ -22,13 +22,11 @@ export class Queue<T> {
     return this._waitingProducers.length;
   }
 
-  close(): Task<void> {
-    return Task.try(() => {
-      this._closed = true;
-      while (this.waitingConsumers > 0) {
-        this._waitingConsumers.shift().reject(new Queue.ClosedError());
-      }
-    });
+  close(): void {
+    this._closed = true;
+    while (this.waitingConsumers > 0) {
+      this._waitingConsumers.shift().reject(new Queue.ClosedError());
+    }
   }
 
   enqueue(t: T): Task<void> {
@@ -105,7 +103,7 @@ export class Queue<T> {
   }
 
   get closingProducer(): Sink<T, void, void> {
-    return this.producer.mapWithTask(() => this.close());
+    return this.producer.map(() => this.close());
   }
 }
 

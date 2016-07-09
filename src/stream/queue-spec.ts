@@ -162,7 +162,7 @@ describe('Queue', () => {
       overflowStrategy: Queue.OverflowStrategy.Block
     });
 
-    const promise = q.close().andThen(() => q.enqueue(1)).exec();
+    const promise = Task.try(() => q.close()).andThen(() => q.enqueue(1)).exec();
     return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
   });
 
@@ -172,7 +172,7 @@ describe('Queue', () => {
       overflowStrategy: Queue.OverflowStrategy.Block
     });
 
-    const promise = q.close().andThen(() => q.dequeue()).exec();
+    const promise = Task.try(() => q.close()).andThen(() => q.dequeue()).exec();
     return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
   });
 
