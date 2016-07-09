@@ -1,5 +1,6 @@
 import {Task} from '../core/task';
 import {Queue} from './queue';
+import {Context} from '../core/ctx';
 
 import * as chai from 'chai';
 
@@ -56,6 +57,48 @@ describe('Queue', () => {
     const res = await Promise.all([deqPromise, enqPromise]);
 
     chai.expect(res[0]).to.deep.equal(1);
+  });
+
+  it('removes waiting consumers on cancel', async () => {
+    const q = new Queue({
+      highWaterMark: 5,
+      overflowStrategy: Queue.OverflowStrategy.Block
+    });
+
+    const ctx = new Context();
+    setTimeout(() => ctx.cancel(new Error('cancelled')), 10);
+
+    try {
+      await q.dequeue().run(ctx);
+    } catch (e) {}
+
+    const enqPromise = Task.sequence([q.enqueue(1), q.enqueue(2)]).exec();
+    const deqPromise = Task.sequence([q.dequeue(), q.dequeue()]).exec();
+
+    const res = await Promise.all([deqPromise, enqPromise]);
+
+    chai.expect(res[0]).to.deep.equal([1, 2]);
+  });
+
+  it('removes waiting producers on cancel', async () => {
+    const q = new Queue({
+      highWaterMark: 0,
+      overflowStrategy: Queue.OverflowStrategy.Block
+    });
+
+    const ctx = new Context();
+    setTimeout(() => ctx.cancel(new Error('cancelled')), 10);
+
+    try {
+      await q.enqueue(1).run(ctx);
+    } catch (e) {}
+
+    const deqPromise = Task.sequence([q.dequeue(), q.dequeue()]).exec();
+    const enqPromise = Task.sequence([q.enqueue(2), q.enqueue(3)]).exec();
+
+    const res = await Promise.all([deqPromise, enqPromise]);
+
+    chai.expect(res[0]).to.deep.equal([2, 3]);
   });
 
   it('discards old items on overflow', async () => {

@@ -32,8 +32,9 @@ export class Queue<T> {
       ctx.onCancel(reason => {
         const idx = this._waitingProducers.indexOf(waiter);
         if (idx >= 0) {
-          this._waitingConsumers.splice(idx, 1);
+          this._waitingProducers.splice(idx, 1);
         }
+        reject(reason);
       });
     }));
   }
@@ -52,6 +53,7 @@ export class Queue<T> {
         if (idx >= 0) {
           this._waitingConsumers.splice(idx, 1);
         }
+        reject(reason);
       });
     }));
   }
