@@ -7,6 +7,7 @@ export class Queue<T> {
   private _queue = new Array<T>();
   private _waitingConsumers = new Array<{resolve: (t: T) => void, reject: (err: Error) => void}>();
   private _waitingProducers = new Array<() => T>();
+  private _waitingForDemand = new Array<{resolve: () => void, reject: (err: Error) => void}>();
 
   constructor(private _opts: Queue.Options) {}
 
@@ -32,6 +33,26 @@ export class Queue<T> {
       (this._waitingConsumers.length - this._waitingProducers.length);
   }
 
+  waitForDemand(): Task<void> {
+    return new Task(ctx => new Promise<void>((resolve, reject) => {
+      if (this.closed) {
+        return reject(new Queue.ClosedError());
+      }
+      if (this.demand > 0) {
+        return resolve();
+      }
+      const waiter = {resolve, reject};
+      this._waitingForDemand.push(waiter);
+      ctx.onCancel(reason => {
+        const idx = this._waitingForDemand.indexOf(waiter);
+        if (idx >= 0) {
+          this._waitingProducers.splice(idx, 1);
+        }
+        reject(reason);
+      });
+    }));
+  }
+
   /**
    * The supply is the number of items that can
    * be read from the queue without blocking.
@@ -53,6 +74,9 @@ export class Queue<T> {
     this._closed = true;
     while (this._waitingConsumers.length > 0) {
       this._waitingConsumers.shift().reject(new Queue.ClosedError());
+    }
+    while (this._waitingForDemand.length > 0) {
+      this._waitingForDemand.shift().reject(new Queue.ClosedError());
     }
   }
 
@@ -92,6 +116,9 @@ export class Queue<T> {
   dequeue(): Task<T> {
     return new Task(ctx => new Promise((resolve, reject) => {
       if (this._queue.length > 0) {
+        while (this._waitingForDemand.length > 0) {
+          this._waitingForDemand.shift().resolve();
+        }
         return resolve(this._queue.shift());
       }
       if (this._waitingProducers.length > 0) {

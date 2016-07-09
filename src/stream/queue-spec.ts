@@ -284,4 +284,57 @@ describe('Queue', () => {
 
   });
 
+  describe('waitForDemand', () => {
+
+    it('returns immediately when the queue is not full', async () => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.waitForDemand().exec();
+      chai.expect(q.demand).to.be.equal(2);
+    });
+
+    it('blocks when the queue is full', async () => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.enqueue(1).exec();
+      await q.enqueue(2).exec();
+
+      chai.expect(q.demand).to.be.equal(0);
+
+      await Task.parallel([
+        q.waitForDemand().map(() => {
+          chai.expect(q.demand).to.be.equal(1);
+        }),
+        q.dequeue().map(() => null)
+      ]).exec();
+    });
+
+    it('can be cancelled', async () => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.enqueue(1).exec();
+      await q.enqueue(2).exec();
+
+      chai.expect(q.demand).to.be.equal(0);
+
+      const err = new Error('some error');
+      const ctx = new Context();
+      const promise = q.waitForDemand().run(ctx);
+
+      await Task.try(() => ctx.cancel(err)).delay(30).exec();
+
+      return chai.expect(promise).to.eventually.be.rejectedWith(err);
+    });
+
+  });
+
 });
