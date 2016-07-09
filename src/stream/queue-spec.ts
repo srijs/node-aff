@@ -315,6 +315,23 @@ describe('Queue', () => {
       ]).exec();
     });
 
+    it('blocks when the queue has zero capacity', async () => {
+      const q = new Queue({
+        highWaterMark: 0,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      chai.expect(q.demand).to.be.equal(0);
+
+      const waitPromise = q.waitForDemand().map(() => {
+        chai.expect(q.demand).to.be.equal(1);
+      }).exec();
+
+      q.dequeue().delay(30).exec();
+
+      return chai.expect(waitPromise).to.be.fulfilled;
+    });
+
     it('can be cancelled', async () => {
       const q = new Queue({
         highWaterMark: 2,

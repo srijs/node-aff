@@ -136,6 +136,9 @@ export class Queue<T> {
         }
         reject(reason);
       });
+      while (this._waitingForDemand.length > 0) {
+        this._waitingForDemand.shift().resolve();
+      }
     }));
   }
 
