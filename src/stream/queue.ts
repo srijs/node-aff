@@ -14,17 +14,44 @@ export class Queue<T> {
     return this._closed;
   }
 
-  get waitingConsumers(): number {
-    return this._waitingConsumers.length;
+  /**
+   * The demand is the number of items that can
+   * be written into the queue without blocking.
+   *
+   * On an empty queue, it is the sum of the capacity
+   * and the number of waiting consumers.
+   *
+   * On a non-empty queue, it is the difference between the capacity
+   * and the number of items in the queue.
+   *
+   * On a full queue, it is the negative of the number of
+   * waiting producers.
+   */
+  get demand(): number {
+    return (this._opts.highWaterMark - this._queue.length) +
+      (this._waitingConsumers.length - this._waitingProducers.length);
   }
 
-  get waitingProducers(): number {
-    return this._waitingProducers.length;
+  /**
+   * The supply is the number of items that can
+   * be read from the queue without blocking.
+   *
+   * On an empty queue, it is the negative of the number of
+   * waiting consumers.
+   *
+   * On a non-empty queue, it is the number of items in the queue.
+   *
+   * On a full queue, it is the sum of the capacity
+   * and the number of waiting producers.
+   */
+  get supply(): number {
+    return this._queue.length +
+      (this._waitingProducers.length - this._waitingConsumers.length);
   }
 
   close(): void {
     this._closed = true;
-    while (this.waitingConsumers > 0) {
+    while (this._waitingConsumers.length > 0) {
       this._waitingConsumers.shift().reject(new Queue.ClosedError());
     }
   }
@@ -34,7 +61,7 @@ export class Queue<T> {
       if (this.closed) {
         return reject(new Queue.ClosedError());
       }
-      if (this.waitingConsumers > 0) {
+      if (this._waitingConsumers.length > 0) {
         this._waitingConsumers.shift().resolve(t);
         return resolve(null);
       }
@@ -67,7 +94,7 @@ export class Queue<T> {
       if (this._queue.length > 0) {
         return resolve(this._queue.shift());
       }
-      if (this.waitingProducers > 0) {
+      if (this._waitingProducers.length > 0) {
         return resolve(this._waitingProducers.shift()());
       }
       if (this.closed) {

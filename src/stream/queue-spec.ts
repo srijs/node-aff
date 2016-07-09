@@ -176,4 +176,112 @@ describe('Queue', () => {
     return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
   });
 
+  describe('demand', () => {
+
+    it('is the sum of the capacity and the number of waiting consumers if empty', (done) => {
+      const q = new Queue({
+        highWaterMark: 100,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      q.dequeue().exec();
+      q.dequeue().exec();
+
+      setImmediate(() => {
+        try {
+          chai.expect(q.demand).to.be.equal(102);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
+    it('is the difference between the capacity and the number of items in the queue if not empty', async () => {
+      const q = new Queue({
+        highWaterMark: 100,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.enqueue(1).exec();
+      chai.expect(q.demand).to.be.equal(99);
+    });
+
+    it('is the negative of the number of waiting producers if full', (done) => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      q.enqueue(1).exec();
+      q.enqueue(2).exec();
+      q.enqueue(3).exec();
+      q.enqueue(4).exec();
+
+      setImmediate(() => {
+        try {
+          chai.expect(q.demand).to.be.equal(-2);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
+  });
+
+  describe('supply', () => {
+
+    it('is the negative of the number of waiting consumers if empty', (done) => {
+      const q = new Queue({
+        highWaterMark: 100,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      q.dequeue().exec();
+      q.dequeue().exec();
+
+      setImmediate(() => {
+        try {
+          chai.expect(q.supply).to.be.equal(-2);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
+    it('is the number of items in the queue if not empty', async () => {
+      const q = new Queue({
+        highWaterMark: 100,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      await q.enqueue(1).exec();
+      chai.expect(q.supply).to.be.equal(1);
+    });
+
+    it('is the sum of the capacity and the number of waiting producers if full', (done) => {
+      const q = new Queue({
+        highWaterMark: 2,
+        overflowStrategy: Queue.OverflowStrategy.Block
+      });
+
+      q.enqueue(1).exec();
+      q.enqueue(2).exec();
+      q.enqueue(3).exec();
+      q.enqueue(4).exec();
+
+      setImmediate(() => {
+        try {
+          chai.expect(q.supply).to.be.equal(4);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+
+  });
+
 });
