@@ -80,12 +80,7 @@ export class Queue<T> {
       const consume = (state: State): Task<Result> => {
         return this.dequeue().caseOf({
           success: data => sink.onData(state, data).andThen(consume),
-          error: err => {
-            if (err instanceof Queue.ClosedError) {
-              return sink.onEnd(state);
-            }
-            return Task.fail(err);
-          }
+          error: () => sink.onEnd(state)
         });
       };
 

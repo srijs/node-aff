@@ -2,9 +2,11 @@ import {Context} from '../core/ctx';
 import {Task} from '../core/task';
 import {Queue} from './queue';
 import {Source} from './source';
-import {Sink} from './sink';
 
 import * as chai from 'chai';
+import * as chaiAsPromised from 'chai-as-promised';
+
+chai.use(chaiAsPromised);
 
 describe('Queue', () => {
 
@@ -152,6 +154,26 @@ describe('Queue', () => {
     const res = await Promise.all([proPromise, conPromise]);
 
     chai.expect(res[1]).to.deep.equal([1,2,3]);
+  });
+
+  it('fails when writing to a closed queue', () => {
+    const q = new Queue({
+      highWaterMark: 0,
+      overflowStrategy: Queue.OverflowStrategy.Block
+    });
+
+    const promise = q.close().andThen(() => q.enqueue(1)).exec();
+    return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
+  });
+
+  it('fails when reading from a closed queue', () => {
+    const q = new Queue({
+      highWaterMark: 0,
+      overflowStrategy: Queue.OverflowStrategy.Block
+    });
+
+    const promise = q.close().andThen(() => q.dequeue()).exec();
+    return chai.expect(promise).to.eventually.be.rejectedWith(Queue.ClosedError);
   });
 
 });
