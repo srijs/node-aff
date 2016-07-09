@@ -78,7 +78,7 @@ export class Queue<T> {
   get consumer(): Source<T> {
     return new Source(<State, Result>(sink: SinkInterface<T, State, Result>): Task<Result> => {
       const consume = (state: State): Task<Result> => {
-        return this.dequeue().caseOf({
+        return this.dequeue().when({
           success: data => sink.onData(state, data).andThen(consume),
           error: () => sink.onEnd(state)
         });

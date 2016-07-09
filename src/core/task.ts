@@ -167,13 +167,13 @@ export class Task<T> {
   /**
    * Branches based on the outcome of the Task.
    */
-  public caseOf<U>(
-    pattern: {success: (t: T) => Task<U>, error: (err: Error) => Task<U>}
+  public when<U>(
+    branches: {success: (t: T) => Task<U>, error: (err: Error) => Task<U>}
   ): Task<U> {
     return new Task((ctx: Context) => {
       return ctx.withChild(cctx => this.run(cctx)).then(
-        res => ctx.withChild(cctx => pattern.success(res).run(cctx)),
-        err => ctx.withChild(cctx => pattern.error(err).run(cctx))
+        res => ctx.withChild(cctx => branches.success(res).run(cctx)),
+        err => ctx.withChild(cctx => branches.error(err).run(cctx))
       );
     });
   }
