@@ -1,6 +1,8 @@
+import {Context} from '../core/ctx';
 import {Task} from '../core/task';
 import {Queue} from './queue';
-import {Context} from '../core/ctx';
+import {Source} from './source';
+import {Sink} from './sink';
 
 import * as chai from 'chai';
 
@@ -133,6 +135,23 @@ describe('Queue', () => {
     const res = await q.dequeue().exec();
 
     chai.expect(res).to.deep.equal(1);
+  });
+
+  it('produces what it consumes', async () => {
+    const q = new Queue({
+      highWaterMark: 0,
+      overflowStrategy: Queue.OverflowStrategy.Block
+    });
+
+    const source = q.consumer;
+    const sink = q.closingProducer;
+
+    const proPromise = Source.fromArray([1,2,3]).pipe(sink).exec();
+    const conPromise = source.toArray().exec();
+
+    const res = await Promise.all([proPromise, conPromise]);
+
+    chai.expect(res[1]).to.deep.equal([1,2,3]);
   });
 
 });

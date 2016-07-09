@@ -3,16 +3,29 @@ import {Source} from './source';
 import {Sink, SinkInterface} from './sink';
 
 export class Queue<T> {
+  private _closed = false;
   private _queue = new Array<T>();
-  private _waitingConsumers = new Array<(t: T) => void>();
+  private _waitingConsumers = new Array<{resolve: (t: T) => void, reject: (err: Error) => void}>();
   private _waitingProducers = new Array<() => T>();
 
   constructor(private _opts: Queue.Options) {}
 
+  close(): Task<void> {
+    return Task.try(() => {
+      this._closed = true;
+      while (this._waitingConsumers.length > 0) {
+        this._waitingConsumers.shift().reject(new Queue.ClosedError());
+      }
+    });
+  }
+
   enqueue(t: T): Task<void> {
     return new Task(ctx => new Promise<void>((resolve, reject) => {
+      if (this._closed) {
+        return reject(new Queue.ClosedError());
+      }
       if (this._waitingConsumers.length > 0) {
-        this._waitingConsumers.shift()(t);
+        this._waitingConsumers.shift().resolve(t);
         return resolve(null);
       }
       if (this._queue.length < this._opts.highWaterMark) {
@@ -47,9 +60,13 @@ export class Queue<T> {
       if (this._waitingProducers.length > 0) {
         return resolve(this._waitingProducers.shift()());
       }
-      this._waitingConsumers.push(resolve);
+      if (this._closed) {
+        return reject(new Queue.ClosedError());
+      }
+      const consumer = {resolve, reject};
+      this._waitingConsumers.push(consumer);
       ctx.onCancel(reason => {
-        const idx = this._waitingConsumers.indexOf(resolve);
+        const idx = this._waitingConsumers.indexOf(consumer);
         if (idx >= 0) {
           this._waitingConsumers.splice(idx, 1);
         }
@@ -61,8 +78,14 @@ export class Queue<T> {
   get consumer(): Source<T> {
     return new Source(<State, Result>(sink: SinkInterface<T, State, Result>): Task<Result> => {
       const consume = (state: State): Task<Result> => {
-        return this.dequeue().andThen(data => {
-          return sink.onData(state, data).andThen(consume);
+        return this.dequeue().caseOf({
+          success: data => sink.onData(state, data).andThen(consume),
+          error: err => {
+            if (err instanceof Queue.ClosedError) {
+              return sink.onEnd(state);
+            }
+            return Task.fail(err);
+          }
         });
       };
 
@@ -72,6 +95,10 @@ export class Queue<T> {
 
   get producer(): Sink<T, void, void> {
     return Sink.forEach<T>(data => this.enqueue(data));
+  }
+
+  get closingProducer(): Sink<T, void, void> {
+    return this.producer.mapWithTask(() => this.close());
   }
 }
 
@@ -85,5 +112,12 @@ export module Queue {
   export interface Options {
     highWaterMark: number;
     overflowStrategy: OverflowStrategy;
+  }
+
+  export class ClosedError extends Error {
+    constructor() {
+      super();
+      this.name = 'Queue.ClosedError';
+    }
   }
 }
