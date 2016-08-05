@@ -26,24 +26,31 @@ class FeedingStream<A> extends stream.Writable {
   }
 }
 
-function feed<A>(input: () => NodeJS.ReadableStream, init: A, step: (state: A, buf: Buffer) => Task<A>): Task<A> {
+export type InputStreamSupplier = (ctx: Context, resolve: (stream: NodeJS.ReadableStream) => void, reject: (err: Error) => void) => void;
+
+function feed<A>(supplier: InputStreamSupplier, init: A, step: (state: A, buf: Buffer) => Task<A>): Task<A> {
   return new Task<A>((ctx: Context) => {
     const s = new FeedingStream(ctx, init, step);
-    const t = input();
-    const p = new Promise((resolve, reject) => {
-      t.on('error', reject);
-      s.on('finish', () => resolve(s.state));
-      s.on('error', reject);
+    return new Promise((resolve, reject) => {
+      supplier(ctx, (stream) => {
+        stream.on('error', reject);
+        s.on('finish', () => resolve(s.state));
+        s.on('error', reject);
+        stream.pipe(s);
+      }, reject);
     });
-    t.pipe(s);
-    return p;
   });
 }
 
 export function fromInputStream(input: () => NodeJS.ReadableStream): Source<Buffer> {
+  const supplier: InputStreamSupplier = (ctx, resolve, reject) => resolve(input());
+  return fromInputStreamSupplier(supplier);
+}
+
+export function fromInputStreamSupplier(supplier: InputStreamSupplier): Source<Buffer> {
   return new Source(<State, Result>(sink: SinkInterface<Buffer, State, Result>) => {
     return sink.onStart().andThen((init: State) => {
-      return feed(input, init, (state, buf) => sink.onData(state, buf));
+      return feed(supplier, init, (state, buf) => sink.onData(state, buf));
     }).andThen((state: State) => {
       return sink.onEnd(state);
     });

@@ -1,7 +1,7 @@
 import {Task} from '../core/task';
 
 import {Sink, SinkInterface} from './sink';
-import {fromInputStream} from './compat/input';
+import {fromInputStream, fromInputStreamSupplier, InputStreamSupplier} from './compat/input';
 
 export class Source<Output> {
   constructor(private _pipe: <State, Result>(sink: SinkInterface<Output, State, Result>) => Task<Result>) {}
@@ -136,5 +136,9 @@ export class Source<Output> {
 
   static fromInputStream(input: () => NodeJS.ReadableStream): Source<Buffer> {
     return fromInputStream(input);
+  }
+
+  static fromInputStreamSupplier(supplier: InputStreamSupplier): Source<Buffer> {
+    return fromInputStreamSupplier(supplier);
   }
 }
