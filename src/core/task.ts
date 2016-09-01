@@ -26,8 +26,6 @@ export class Task<T> {
   /**
    * Runs the effectful computation by supplying the necessary
    * effect handlers, resulting in a promise.
-   *
-   * @param inj The map of required effect handlers.
    */
   public exec(): Promise<T> {
     const ctx = new Context();
@@ -38,10 +36,10 @@ export class Task<T> {
    * Lifts a value into a pure task which immediately returns.
    *
    * @type T The type of the value.
-   * @param x The value to lift.
+   * @param t The value to lift.
    */
-  public static of<T>(x: T): Task<T> {
-    return new Task(_ => Promise.resolve(x));
+  public static of<T>(t: T): Task<T> {
+    return new Task(_ => Promise.resolve(t));
   }
 
   /**
@@ -184,10 +182,7 @@ export class Task<T> {
    * @param f The pure handler function.
    */
   public catchError(f: (err: Error) => T): Task<T> {
-    return this.when({
-      ok: t => Task.of(t),
-      err: err => Task.of(f(err))
-    });
+    return this.recover(err => Task.of(f(err)));
   }
 
   /**
@@ -207,11 +202,8 @@ export class Task<T> {
    *
    * @param f The pure mapping function.
    */
-  public map<U>(f: (x: T) => U): Task<U> {
-    return this.when({
-      ok: t => Task.of(f(t)),
-      err: err => Task.fail(err)
-    });
+  public map<U>(f: (t: T) => U): Task<U> {
+    return this.andThen(t => Task.of(f(t)));
   }
 
   /**
@@ -219,11 +211,46 @@ export class Task<T> {
    *
    * @param f The effectful mapping function.
    */
-  public andThen<G, U>(f: (x: T) => Task<U>): Task<U> {
+  public andThen<U>(f: (t: T) => Task<U>): Task<U> {
     return this.when({
       ok: t => f(t),
       err: err => Task.fail(err)
     });
+  }
+
+  /**
+   * Discards this value for a new pure one.
+   *
+   * @param u The new pure value.
+   */
+  public return<U>(u: U): Task<U> {
+    return this.map(_ => u);
+  }
+
+  /**
+   * Discards this value for a new Task.
+   *
+   * @param tu The new Task.
+   */
+  public andReturn<U>(tu: Task<U>): Task<U> {
+    return this.andThen(_ => tu);
+  }
+
+  /**
+   * Discards this value.
+   */
+  public void(): Task<void> {
+    return this.andReturn(Task.unit());
+  }
+
+  /**
+   * Maps the value and another using an effectful mapping function.
+   *
+   * @param f The effectful mapping function.
+   * @param tu The Task containing the other value.
+   */
+  public map2<U, V>(f: (t: T, u: U) => V, tu: Task<U>): Task<V> {
+    return this.andThen(t => tu.map(u => f(t, u)));
   }
 
   /**
@@ -243,7 +270,7 @@ export class Task<T> {
   /**
    * Combines the computation with another in parallel.
    *
-   * @param eff The second effectful computation.
+   * @param task The second effectful computation.
    */
   public parallel<U>(task: Task<U>): Task<[T, U]> {
     return new Task((ctx: Context) => {
@@ -286,8 +313,8 @@ export class Task<T> {
       return f(arr[i]).andThen(u => {
         return loop(i + 1, arr2.concat([u]));
       });
-    };
-    return loop(0, []);
+    }
+    return Task.tryTask(() => loop(0, []));
   }
 
   /**
@@ -296,7 +323,7 @@ export class Task<T> {
    * @param arr The array to iterate over
    * @param f The iterator function
    */
-  static forEach<T, U>(arr: Array<T>, f: (x: T) => Task<void>): Task<void> {
+  public static forEach<T, U>(arr: Array<T>, f: (x: T) => Task<void>): Task<void> {
     function loop(i: number): Task<void> {
       if (i >= arr.length) {
         return Task.unit();
@@ -304,8 +331,8 @@ export class Task<T> {
       return f(arr[i]).andThen(() => {
         return loop(i + 1);
       });
-    };
-    return loop(0);
+    }
+    return Task.tryTask(() => loop(0));
   }
 
   /**
@@ -316,7 +343,7 @@ export class Task<T> {
    * @param f The iterator function
    * @param init The initial state
    */
-  static fold<S, T, U>(arr: Array<T>, f: (s: S, x: T) => Task<S>, init: S): Task<S> {
+  public static fold<S, T, U>(arr: Array<T>, f: (s: S, x: T) => Task<S>, init: S): Task<S> {
     function loop(state: S, i: number): Task<S> {
       if (i >= arr.length) {
         return Task.of(state);
@@ -324,11 +351,15 @@ export class Task<T> {
       return f(state, arr[i]).andThen((newState) => {
         return loop(newState, i + 1);
       });
-    };
-    return loop(init, 0);
+    }
+    return Task.tryTask(() => loop(init, 0));
   }
 
-  static using<T extends Closable, U>(res: Resource<T>, action: (t: T) => Task<U>): Task<U> {
+  public static using<T extends Closable, U>(res: Resource<T>, action: (t: T) => Task<U>): Task<U> {
     return res.use(action);
+  }
+
+  public static tryTask<T>(f: () => Task<T>): Task<T> {
+    return Task.unit().andThen(f);
   }
 }

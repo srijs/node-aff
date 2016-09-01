@@ -44,7 +44,11 @@ export class Context {
     if (this._cancelled) {
       return Promise.reject<T>(this._cancellationReason);
     }
-    return action();
+    try {
+      return action();
+    } catch (err) {
+      return Promise.reject<T>(err);
+    }
   }
 
   withChild<T>(action: (ctx: Context) => Promise<T>): Promise<T> {
@@ -52,13 +56,18 @@ export class Context {
       const child = new Context();
       child._parent = this;
       this._addChild(child);
-      return action(child).then(value => {
+      try {
+        return action(child).then(value => {
+          this._clearChild(child);
+          return value;
+        }, err => {
+          this._clearChild(child);
+          throw err;
+        });
+      } catch (err) {
         this._clearChild(child);
-        return value;
-      }, err => {
-        this._clearChild(child);
-        throw err;
-      });
+        return Promise.reject<T>(err);
+      }
     });
   }
 }
