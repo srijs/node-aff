@@ -105,6 +105,16 @@ describe('Task', () => {
 
   });
 
+  describe('unit', () => {
+
+    it('retains the error in case of failure', () => {
+      const reason = new Error('some kind of error');
+      const promise = Task.fail(reason).void().exec();
+      return chai.expect(promise).to.be.rejectedWith(reason);
+    });
+
+  });
+
   describe('throwError', () => {
 
     it('returns a task that fails', () => {
@@ -298,6 +308,35 @@ describe('Task', () => {
     it('executes all the tasks in the array in sequence', async () => {
       const tasks = [Task.of(1), Task.of(2), Task.of(3)];
       await chai.expect(Task.parallel(tasks).exec()).to.eventually.be.deep.equal([1,2,3]);
+    });
+
+  });
+
+  describe('tryTask', () => {
+
+    it('calls the function', async () => {
+      await chai.expect(Task.tryTask(() => Task.of(1)).exec()).to.eventually.equals(1);
+    });
+
+    it('can be cancelled', () => {
+      const ctx = new Context();
+      const op1 = Task.tryTask(() => Task.of(1)).delay(50);
+      const promise = op1.run(ctx);
+      const cause = new Error('Operation cancelled');
+      ctx.cancel(cause);
+      return chai.expect(promise).to.be.rejectedWith(cause);
+    });
+
+    it('propagates errors', async () => {
+      const reason = new Error('some kind of error');
+      await chai.expect(Task.tryTask(() => Task.fail(reason)).exec()).to.be.rejectedWith(reason);
+    });
+
+    it('catches errors', async () => {
+      const reason = new Error('some kind of error');
+      await chai.expect(Task.tryTask(<any>(() => {
+        throw reason;
+      })).exec()).to.be.rejectedWith(reason);
     });
 
   });
