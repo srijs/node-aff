@@ -135,7 +135,8 @@ export class Source<Output> {
   }
 
   static fromInputStream(input: () => NodeJS.ReadableStream): Source<Buffer> {
-    return fromInputStream(input);
+    const supplier: InputStreamSupplier = (ctx, resolve, reject) => resolve(input());
+    return this.fromInputStreamSupplier(supplier);
   }
 
   static fromInputStreamSupplier(supplier: InputStreamSupplier): Source<Buffer> {

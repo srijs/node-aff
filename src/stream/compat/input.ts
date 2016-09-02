@@ -42,11 +42,6 @@ function feed<A>(supplier: InputStreamSupplier, init: A, step: (state: A, buf: B
   });
 }
 
-export function fromInputStream(input: () => NodeJS.ReadableStream): Source<Buffer> {
-  const supplier: InputStreamSupplier = (ctx, resolve, reject) => resolve(input());
-  return fromInputStreamSupplier(supplier);
-}
-
 export function fromInputStreamSupplier(supplier: InputStreamSupplier): Source<Buffer> {
   return new Source(<State, Result>(sink: SinkInterface<Buffer, State, Result>) => {
     return sink.onStart().andThen((init: State) => {
