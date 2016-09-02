@@ -5,6 +5,8 @@ import * as chaiAsPromised from 'chai-as-promised';
 
 import {Task} from './task';
 import {Context} from './ctx';
+import {Backoff} from '../utils/backoff';
+import {Resource, Closable} from '../utils/resource';
 
 chai.use(chaiAsPromised);
 
@@ -371,4 +373,124 @@ describe('Task', () => {
 
   });
 
+  describe('using', () => {
+
+    it('closes the resource on task success', async () => {
+      let isClosed = false;
+      const closable: Closable = {
+        close: () => {
+          isClosed = true;
+        }
+      };
+      const resource = new Resource(Task.of(closable));
+      const value = await Task.using(resource, _ => Task.of(3)).exec();
+      chai.expect(value).to.equals(3);
+      chai.expect(isClosed).to.be.true;
+    });
+
+    it('closes the resource on task failure', async () => {
+      let isClosed = false;
+      const closable: Closable = {
+        close: () => {
+          isClosed = true;
+        }
+      };
+      const reason = new Error('some kind of error');
+      const resource = new Resource(Task.of(closable));
+      let failed = true;
+      try {
+        await Task.using(resource, _ => Task.fail(reason)).exec();
+        failed = false;
+      } catch (err) {
+        chai.expect(err).to.equals(reason);
+      }
+      chai.expect(failed).to.be.true;
+      chai.expect(isClosed).to.be.true;
+    });
+
+    it('propagates acquisition failure', async () => {
+      const reason = new Error('some kind of error');
+      const wrongReason = new Error('should not throw this error');
+      const resource = new Resource(Task.fail(reason));
+      let failed = true;
+      try {
+        await Task.using(resource, _ => Task.fail(wrongReason)).exec();
+        failed = false;
+      } catch (err) {
+        chai.expect(err).to.equals(reason);
+      }
+      chai.expect(failed).to.be.true;
+    });
+
+  });
+
+  describe('retry', () => {
+
+    it('respects the maximum number of retries allowed', async () => {
+      let timesCalled = 0;
+      let timesBackoffCalled = 0;
+      const reason = new Error('some kind of error');
+      const backoff: Backoff = {
+        nth: (n: number) => {
+          timesBackoffCalled++;
+          return 0;
+        }
+      };
+      let failed = true;
+      try {
+        await Task.try(() => {
+          timesCalled++;
+          throw reason;
+        }).retry(backoff, 7).exec();
+        failed = false;
+      } catch (err) {
+        chai.expect(err).to.equals(reason);
+      }
+      chai.expect(timesBackoffCalled).to.equals(7);
+      chai.expect(timesCalled).to.equals(8); // first time + number of retries
+    });
+
+    it('does not call backoff if the maximum number of retries is zero', async () => {
+      let timesCalled = 0;
+      let timesBackoffCalled = 0;
+      const reason = new Error('some kind of error');
+      const backoff: Backoff = {
+        nth: (n: number) => {
+          console.log(n);
+          timesBackoffCalled++;
+          return 0;
+        }
+      };
+      let failed = true;
+      try {
+        await Task.try(() => {
+          timesCalled++;
+          throw reason;
+        }).retry(backoff, 0).exec();
+        failed = false;
+      } catch (err) {
+        chai.expect(err).to.equals(reason);
+      }
+      chai.expect(timesBackoffCalled).to.equals(0);
+      chai.expect(timesCalled).to.equals(1); // only first time
+    });
+
+    it('does not retry after success', async () => {
+      let timesCalled = 0;
+      const reason = new Error('some kind of error');
+      const backoff: Backoff = {
+        nth: (n: number) => 0
+      };
+      const result = await Task.try(() => {
+        timesCalled++;
+        if (timesCalled < 17) {
+          throw reason;
+        }
+        return 8;
+      }).retry(backoff, 100).exec();
+      chai.expect(result).to.equals(8);
+      chai.expect(timesCalled).to.equals(17);
+    });
+
+  });
 });
