@@ -100,9 +100,14 @@ export class Task<T> {
   /**
    * Retries the task on failure up to a number of times,
    * with the given backoff strategy.
+   * @param backoff The backoff strategy.
+   * @param maxRetries The maximum number of times to retry the Task. Does not retry if less than or equals 0.
    */
   retry(backoff: Backoff, maxRetries: number): Task<T> {
-    return this._retry(backoff, maxRetries, 0);
+    if (maxRetries <= 0) {
+      return this;
+    }
+    return this.recover(err => this._retry(backoff, maxRetries, 1));
   }
 
   private _retry(backoff: Backoff, maxRetries: number, n: number): Task<T> {
