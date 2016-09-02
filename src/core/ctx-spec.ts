@@ -24,6 +24,15 @@ describe('Context', () => {
       return chai.expect(promise).to.eventually.equal(42);
     });
 
+    it('catches thrown errors', () => {
+      const ctx = new Context();
+      const reason = new Error('yep this is an error');
+      const promise = ctx.guard(<any>(() => {
+        throw reason;
+      }));
+      return chai.expect(promise).to.eventually.be.rejectedWith(reason);
+    });
+
   });
 
   describe('withChild', () => {
@@ -40,6 +49,15 @@ describe('Context', () => {
       const ctx = new Context();
       const promise = ctx.withChild(cctx => Promise.resolve(42));
       return chai.expect(promise).to.eventually.equal(42);
+    });
+
+    it('catches thrown errors', () => {
+      const ctx = new Context();
+      const reason = new Error('yep this is an error');
+      const promise = ctx.withChild(<any>((cctx: Context) => {
+        throw reason;
+      }));
+      return chai.expect(promise).to.eventually.be.rejectedWith(reason);
     });
 
   });
